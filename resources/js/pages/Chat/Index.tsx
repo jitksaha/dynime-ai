@@ -37,6 +37,7 @@ import {
     Lightbulb,
     Sun,
     Moon,
+    Laptop,
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -205,6 +206,11 @@ export default function ChatIndex({
     const ssoLoginUrl = `https://account.dynime.com/login?client_id=dynime_ai_app&redirect=${encodeURIComponent(
         window.location.origin + '/auth/sso/callback'
     )}`;
+
+    const avatarSrc =
+        user?.avatar_url ||
+        user?.avatar ||
+        (user?.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7c3aed&color=fff` : null);
 
     const handleSelectConversation = async (conv: Conversation) => {
         if (activeConv?.uuid === conv.uuid) return;
@@ -449,23 +455,20 @@ export default function ChatIndex({
         <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0c0c0f] text-neutral-900 dark:text-neutral-100 font-sans antialiased selection:bg-purple-600 selection:text-white transition-colors duration-200">
             <Head title="Dynime AI - Enterprise Intelligence" />
 
-            {/* Left Kimi-Style Sidebar */}
+            {/* Left Kimi-Style Sidebar (Fixed Width 256px, flex-shrink-0 to never squish) */}
             <aside
-                className={`fixed inset-y-0 left-0 z-40 md:static flex flex-col w-64 bg-[#f6f6f8] dark:bg-[#111115] border-r border-neutral-200/80 dark:border-white/[0.06] transition-all duration-300 shadow-2xl md:shadow-none ${
-                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-none'
+                className={`fixed inset-y-0 left-0 z-40 md:static flex flex-col w-64 min-w-[16rem] max-w-[16rem] flex-shrink-0 bg-[#f7f7f9] dark:bg-[#111115] border-r border-neutral-200/80 dark:border-white/[0.06] transition-all duration-300 shadow-2xl md:shadow-none select-none ${
+                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:min-w-0 md:border-none md:overflow-hidden'
                 }`}
             >
-                {/* Brand & Collapse Header */}
-                <div className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06]">
-                    <div className="flex items-center gap-2.5">
+                {/* Brand Header */}
+                <div className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06] flex-shrink-0">
+                    <div className="flex items-center">
                         <img
                             src="https://cdn.dynime.com/Dynime%20Logo/LOGO%20PNG/dynime-logo.png"
                             alt="Dynime AI"
-                            className="h-6 w-auto object-contain"
+                            className="h-7 w-auto object-contain dark:brightness-0 dark:invert transition-all"
                         />
-                        <span className="font-heading font-black text-sm tracking-widest text-neutral-900 dark:text-white">
-                            DYNIME
-                        </span>
                     </div>
 
                     <button
@@ -478,7 +481,7 @@ export default function ChatIndex({
                 </div>
 
                 {/* + New Chat Button with ⌘K */}
-                <div className="p-3">
+                <div className="p-3 flex-shrink-0">
                     <button
                         onClick={handleNewChat}
                         className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-neutral-100 dark:hover:bg-white/[0.08] border border-neutral-200/80 dark:border-white/[0.07] text-neutral-800 dark:text-white text-xs font-medium transition-all shadow-xs group"
@@ -494,7 +497,7 @@ export default function ChatIndex({
                 </div>
 
                 {/* Kimi Menu Navigation List */}
-                <div className="px-2 py-1 space-y-0.5 text-xs text-neutral-600 dark:text-neutral-300">
+                <div className="px-2 py-1 space-y-0.5 text-xs text-neutral-600 dark:text-neutral-300 flex-shrink-0">
                     <button
                         onClick={handleNewChat}
                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
@@ -667,15 +670,15 @@ export default function ChatIndex({
                     )}
                 </div>
 
-                {/* Footer User / Account Center / Theme Toggle */}
-                <div className="p-3 border-t border-neutral-200/80 dark:border-white/[0.06] bg-[#f0f0f3] dark:bg-[#0f0f13]">
+                {/* Footer User Profile & Controls */}
+                <div className="p-3 border-t border-neutral-200/80 dark:border-white/[0.06] bg-[#f0f0f3] dark:bg-[#0f0f13] flex-shrink-0">
                     {user ? (
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <img
-                                    src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6d28d9&color=fff`}
+                                    src={avatarSrc || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7c3aed&color=fff`}
                                     alt={user.name}
-                                    className="w-8 h-8 rounded-lg object-cover border border-neutral-200 dark:border-white/10"
+                                    className="w-8 h-8 rounded-full object-cover border border-neutral-200 dark:border-white/10 shadow-xs"
                                 />
                                 <div className="truncate">
                                     <p className="text-xs font-semibold text-neutral-900 dark:text-white truncate">{user.name}</p>
@@ -711,27 +714,24 @@ export default function ChatIndex({
                     ) : (
                         <a
                             href={ssoLoginUrl}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium transition-all shadow-sm"
+                            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium transition-all shadow-sm"
                         >
                             <Shield className="w-3.5 h-3.5" />
-                            <span>Log in via Dynime Account</span>
+                            <span>Log in</span>
                         </a>
                     )}
                 </div>
             </aside>
 
             {/* Main Canvas Area */}
-            <main className="flex-1 flex flex-col h-full bg-white dark:bg-[#0c0c0f] relative overflow-hidden transition-colors duration-200">
-                {/* Subtle Ambient Radial Glow in Dark Mode */}
-                <div className="hidden dark:block absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-purple-900/15 via-indigo-900/5 to-transparent blur-3xl pointer-events-none -z-0" />
-
+            <main className="flex-1 min-w-0 flex flex-col h-full bg-white dark:bg-[#0c0c0f] relative overflow-hidden transition-colors duration-200">
                 {/* Top Nav Bar */}
-                <header className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06] bg-white/80 dark:bg-[#0c0c0f]/80 backdrop-blur-xl z-20 transition-colors duration-200">
-                    <div className="flex items-center gap-3">
+                <header className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06] bg-white/80 dark:bg-[#0c0c0f]/80 backdrop-blur-xl z-20 transition-colors duration-200 flex-shrink-0">
+                    <div className="flex items-center gap-3 min-w-0">
                         {!isSidebarOpen && (
                             <button
                                 onClick={() => setIsSidebarOpen(true)}
-                                className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
+                                className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors flex-shrink-0"
                                 title="Expand sidebar"
                             >
                                 <PanelLeft className="w-4 h-4" />
@@ -744,7 +744,7 @@ export default function ChatIndex({
                         )}
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                         {/* Telegram Theme Switcher Button */}
                         <button
                             onClick={toggleTheme}
@@ -783,17 +783,66 @@ export default function ChatIndex({
                             </>
                         )}
 
-                        <a
-                            href="https://account.dynime.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-purple-600 dark:hover:text-purple-300 flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
-                        >
-                            <span>account.dynime.com</span>
-                            <ExternalLink className="w-3 h-3" />
-                        </a>
-
-                        {!user && (
+                        {/* Top Header Right: Dynamic Profile Avatar Icon with Dropdown Menu */}
+                        {user ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        className="relative flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-purple-500/40 focus:outline-none transition-all group"
+                                        title={`${user.name} (Dynime Account)`}
+                                    >
+                                        <img
+                                            src={avatarSrc || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7c3aed&color=fff`}
+                                            alt={user.name}
+                                            className="w-8 h-8 rounded-full object-cover border border-neutral-200 dark:border-white/20 shadow-xs group-hover:scale-105 transition-transform"
+                                        />
+                                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0c0c0f]" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-60 bg-white dark:bg-[#16161b] border border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white shadow-2xl rounded-2xl p-1.5">
+                                    <div className="px-3 py-2.5 border-b border-neutral-100 dark:border-white/5">
+                                        <p className="text-xs font-bold text-neutral-900 dark:text-white truncate">{user.name}</p>
+                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">{user.email}</p>
+                                    </div>
+                                    <DropdownMenuItem asChild>
+                                        <a
+                                            href="https://account.dynime.com"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-between text-xs py-2 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer font-medium text-neutral-700 dark:text-neutral-200"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <UserIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                                <span>Dynime Account Center</span>
+                                            </div>
+                                            <ExternalLink className="w-3 h-3 text-neutral-400" />
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <a
+                                            href="https://account.dynime.com/security"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-between text-xs py-2 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-600 dark:text-neutral-300"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Shield className="w-4 h-4 text-neutral-400" />
+                                                <span>Security & Login</span>
+                                            </div>
+                                            <ExternalLink className="w-3 h-3 text-neutral-400" />
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <div className="my-1 border-t border-neutral-100 dark:border-white/5" />
+                                    <DropdownMenuItem
+                                        onClick={() => router.post('/logout')}
+                                        className="flex items-center gap-2 text-xs py-2 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 cursor-pointer"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        <span>Sign out</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
                             <a
                                 href={ssoLoginUrl}
                                 className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-all"
@@ -806,18 +855,15 @@ export default function ChatIndex({
 
                 {/* Content Canvas */}
                 {messages.length === 0 ? (
-                    /* KIMI-STYLE HERO CENTER CANVAS (100% IDENTICAL PROPORTIONS) */
-                    <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 max-w-3xl mx-auto w-full relative z-10">
+                    /* KIMI-STYLE HERO CENTER CANVAS */
+                    <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 sm:px-6 max-w-3xl mx-auto w-full relative z-10 py-8">
                         {/* Huge Bold Title with Official Dynime Logo */}
                         <div className="text-center mb-8 select-none flex flex-col items-center">
                             <img
                                 src="https://cdn.dynime.com/Dynime%20Logo/LOGO%20PNG/dynime-logo.png"
                                 alt="Dynime"
-                                className="h-14 w-auto object-contain mb-3 drop-shadow-sm transition-transform hover:scale-105 duration-200"
+                                className="h-12 sm:h-14 w-auto object-contain mb-3 drop-shadow-sm transition-transform hover:scale-105 duration-200 dark:brightness-0 dark:invert"
                             />
-                            <h1 className="font-heading text-4xl sm:text-5xl font-black tracking-[0.25em] text-neutral-900 dark:text-white drop-shadow-sm">
-                                DYNIME
-                            </h1>
                         </div>
 
                         {/* Centered Input Card */}
@@ -946,7 +992,7 @@ export default function ChatIndex({
                         </div>
 
                         {/* Explore Inspiration Bottom Pill (from Screenshot 1) */}
-                        <div className="mt-14 flex items-center justify-between px-4 py-2 rounded-full bg-neutral-100/80 dark:bg-white/[0.03] border border-neutral-200/60 dark:border-white/[0.06] text-[11px] text-neutral-500 dark:text-neutral-400 w-full max-w-sm">
+                        <div className="mt-12 flex items-center justify-between px-4 py-2 rounded-full bg-neutral-100/80 dark:bg-white/[0.03] border border-neutral-200/60 dark:border-white/[0.06] text-[11px] text-neutral-500 dark:text-neutral-400 w-full max-w-sm">
                             <div className="flex items-center gap-2">
                                 <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
                                 <span>Explore inspiration</span>
@@ -960,7 +1006,7 @@ export default function ChatIndex({
                 ) : (
                     /* ACTIVE CHAT CANVAS (ELEGANT OPEN FLOW - KIMI STYLE) */
                     <div className="flex-1 flex flex-col min-h-0 relative z-10">
-                        {/* Messages Scroll Stream */}
+                        {/* Messages Scroll Stream - Cleanly Centered at max-w-3xl */}
                         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-7 max-w-3xl mx-auto w-full">
                             {messages.map((msg, index) => {
                                 const isUser = msg.role === 'user';
@@ -969,7 +1015,7 @@ export default function ChatIndex({
                                         {isUser ? (
                                             /* User Message: Elegant Right-Aligned Clean Bubble */
                                             <div className="flex justify-end">
-                                                <div className="bg-[#f0f1f5] dark:bg-[#1e1e24] text-neutral-900 dark:text-neutral-100 rounded-2xl rounded-tr-md px-4.5 py-3 text-[14.5px] leading-relaxed max-w-xl shadow-xs border border-neutral-200/50 dark:border-white/[0.06] whitespace-pre-wrap font-normal">
+                                                <div className="bg-[#f0f1f5] dark:bg-[#1e1e24] text-neutral-900 dark:text-neutral-100 rounded-2xl rounded-tr-md px-5 py-3 text-[14.5px] leading-relaxed max-w-xl shadow-xs border border-neutral-200/60 dark:border-white/[0.06] whitespace-pre-wrap font-normal break-words">
                                                     {msg.content}
                                                 </div>
                                             </div>
@@ -1049,7 +1095,7 @@ export default function ChatIndex({
                         </div>
 
                         {/* Bottom Floating Input Card (In Active Chat) */}
-                        <div className="p-4 border-t border-neutral-200/80 dark:border-white/[0.06] bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#0c0c0f] dark:via-[#0c0c0f]/95 backdrop-blur-xl">
+                        <div className="p-4 border-t border-neutral-200/80 dark:border-white/[0.06] bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#0c0c0f] dark:via-[#0c0c0f]/95 backdrop-blur-xl flex-shrink-0">
                             <div className="max-w-3xl mx-auto w-full bg-white dark:bg-[#16161b] border border-neutral-200/90 dark:border-white/[0.08] hover:border-purple-500/40 dark:hover:border-purple-500/30 focus-within:border-purple-600 dark:focus-within:border-purple-500/60 focus-within:ring-2 focus-within:ring-purple-500/10 dark:focus-within:ring-0 rounded-2xl p-2.5 shadow-lg dark:shadow-2xl transition-all">
                                 {attachments.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mb-2 px-1">
