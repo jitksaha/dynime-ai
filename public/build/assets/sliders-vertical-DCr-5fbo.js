@@ -1,4 +1,4 @@
-import{c as y}from"./createLucideIcon-KrC1Ds3-.js";/**
+import{c as y}from"./createLucideIcon-iBYlgE4l.js";/**
  * @license lucide-react v0.378.0 - ISC
  *
  * This source code is licensed under the ISC license.

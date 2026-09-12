@@ -168,19 +168,21 @@ export default function PricingIndex({ plans = FALLBACK_PLANS, currentPlanSlug =
 
                         const rawFeatures = (plan.features || []).filter(f => !f.startsWith('Everything in'));
                         const visibleFeatures = isExpanded ? rawFeatures : rawFeatures.slice(0, 4);
-                        const hasMore = rawFeatures.length > 4;
-
-                        return (
+                        const hasMore = rawFeatures.length > 4;                        return (
                             <div
                                 key={plan.id}
-                                className={`group flex flex-col justify-between rounded-xl transition-all duration-200 bg-white dark:bg-[#141419] ${
+                                className={`relative group flex flex-col justify-between rounded-xl transition-all duration-300 ease-out bg-white dark:bg-[#141419] cursor-pointer hover:-translate-y-1 overflow-hidden ${
                                     plan.is_popular
-                                        ? 'border-2 border-[#635bff] shadow-md shadow-[#635bff]/10'
-                                        : 'border border-neutral-200/90 dark:border-white/[0.08] hover:border-[#635bff]/50 hover:shadow-lg hover:shadow-[#635bff]/5'
+                                        ? 'border-2 border-[#635bff] shadow-md shadow-[#635bff]/10 hover:shadow-2xl hover:shadow-[#635bff]/20'
+                                        : 'border border-neutral-200/90 dark:border-white/[0.08] hover:border-[#635bff]/50 dark:hover:border-[#635bff]/60 hover:shadow-xl hover:shadow-[#635bff]/10'
                                 }`}
                             >
+                                {/* Whisper-Light Subtle Brand Gradient on Hover */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-[#635bff]/[0.035] via-[#5465ff]/[0.015] to-transparent dark:from-[#635bff]/[0.09] dark:via-[#5465ff]/[0.035] dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl" />
+
+                                {/* Top Promo Ribbon - Exact same 32px height across ALL cards so titles & baselines align 100% */}
                                 {plan.badge_top ? (
-                                    <div className="px-3.5 py-1.5 bg-[#635bff]/[0.06] dark:bg-[#635bff]/10 border-b border-[#635bff]/15 flex items-center justify-between text-[10.5px]">
+                                    <div className="relative z-10 h-8 px-3.5 bg-[#635bff]/[0.06] dark:bg-[#635bff]/10 border-b border-[#635bff]/15 flex items-center justify-between text-[10.5px]">
                                         <span className="font-medium text-[#635bff] dark:text-[#788bff] truncate pr-2">
                                             {plan.badge_top}
                                         </span>
@@ -192,12 +194,15 @@ export default function PricingIndex({ plans = FALLBACK_PLANS, currentPlanSlug =
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="h-1.5" />
+                                    <div className="h-8 px-3.5 border-b border-transparent flex items-center justify-between text-[10.5px] invisible select-none pointer-events-none" aria-hidden="true">
+                                        <span>Standard</span>
+                                    </div>
                                 )}
 
-                                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between">
+                                <div className="relative z-10 p-4 sm:p-5 flex-1 flex flex-col justify-between">
                                     <div>
-                                        <div className="flex items-center justify-between gap-1.5">
+                                        {/* Plan Name & Popular Badge - Uniform 28px height */}
+                                        <div className="h-7 flex items-center justify-between gap-1.5">
                                             <h2
                                                 className="text-base sm:text-lg lowercase text-neutral-900 dark:text-white tracking-tight"
                                                 style={{ fontWeight: 440 }}
@@ -211,23 +216,27 @@ export default function PricingIndex({ plans = FALLBACK_PLANS, currentPlanSlug =
                                             )}
                                         </div>
 
-                                        <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-2 min-h-[30px] leading-snug">
-                                            {plan.tagline}
-                                        </p>
+                                        {/* Tagline - Uniform 34px height container */}
+                                        <div className="h-[34px] flex items-start mt-0.5">
+                                            <p className="text-[11.5px] text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-snug">
+                                                {plan.tagline}
+                                            </p>
+                                        </div>
 
-                                        <div className="mt-3 pb-3 border-b border-neutral-100 dark:border-white/[0.06]">
+                                        {/* Price Section - Uniform 66px height so prices & periods align perfectly horizontally */}
+                                        <div className="mt-3 pb-3 border-b border-neutral-100 dark:border-white/[0.06] h-[66px] flex flex-col justify-end">
                                             <div className="flex items-baseline gap-1">
                                                 <span className="text-xs font-semibold text-neutral-400">
                                                     US$
                                                 </span>
                                                 <span
-                                                    className="text-2xl sm:text-3xl text-neutral-900 dark:text-white font-semibold tracking-tight"
+                                                    className="text-2xl sm:text-3xl text-neutral-900 dark:text-white font-semibold tracking-tight leading-none"
                                                     style={{ fontWeight: 440 }}
                                                 >
                                                     {price === 0 ? '0' : Math.round(price)}
                                                 </span>
                                             </div>
-                                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400">
+                                            <p className="text-[10.5px] text-neutral-500 dark:text-neutral-400 h-4 flex items-center mt-1">
                                                 {price === 0
                                                     ? 'Free forever for standard exploration'
                                                     : isAnnual
@@ -236,8 +245,9 @@ export default function PricingIndex({ plans = FALLBACK_PLANS, currentPlanSlug =
                                             </p>
                                         </div>
 
+                                        {/* Feature Checklist (Compact & Clean) */}
                                         <div className="mt-3 space-y-1.5">
-                                            <div className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">
+                                            <div className="h-5 flex items-center text-[11px] font-semibold text-neutral-400 uppercase tracking-wider mb-1">
                                                 {plan.slug === 'free'
                                                     ? 'Included features:'
                                                     : plan.slug === 'pro'
@@ -254,7 +264,7 @@ export default function PricingIndex({ plans = FALLBACK_PLANS, currentPlanSlug =
                                                 return (
                                                     <div
                                                         key={idx}
-                                                        className="flex items-start gap-2 text-[11.5px] text-neutral-700 dark:text-neutral-300 leading-snug"
+                                                        className="flex items-start gap-2 text-[11.5px] text-neutral-700 dark:text-neutral-300 leading-snug min-h-[20px]"
                                                     >
                                                         {isComputer ? (
                                                             <Monitor className="w-3.5 h-3.5 text-[#5465ff] dark:text-[#788bff] flex-shrink-0 mt-0.5" />
@@ -276,10 +286,14 @@ export default function PricingIndex({ plans = FALLBACK_PLANS, currentPlanSlug =
                                                 );
                                             })}
 
+                                            {/* Show More / Show Less Toggle Button */}
                                             {hasMore && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => toggleExpand(plan.slug)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleExpand(plan.slug);
+                                                    }}
                                                     className="inline-flex items-center gap-1 text-[11px] font-medium text-[#635bff] dark:text-[#788bff] hover:underline pt-1"
                                                 >
                                                     <span>
@@ -297,31 +311,42 @@ export default function PricingIndex({ plans = FALLBACK_PLANS, currentPlanSlug =
                                         </div>
                                     </div>
 
+                                    {/* Action Button - Smooth hover animations with scale, ambient glow & shimmer */}
                                     <div className="mt-5 pt-2">
                                         <button
                                             type="button"
                                             disabled={isCurrent || isSubmitting === plan.slug}
-                                            onClick={() => handleSelectPlan(plan)}
-                                            className={`w-full py-2.5 rounded-full text-xs font-semibold transition-all duration-150 flex items-center justify-center gap-2 ${
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSelectPlan(plan);
+                                            }}
+                                            className={`relative overflow-hidden w-full py-2.5 rounded-full text-xs font-semibold flex items-center justify-center gap-2 group/btn transform-gpu transition-all duration-300 ease-out ${
                                                 isCurrent
                                                     ? 'bg-neutral-100 dark:bg-white/5 text-neutral-400 dark:text-neutral-500 border border-neutral-200 dark:border-white/10 cursor-default'
                                                     : plan.is_popular
-                                                    ? 'bg-[#635bff] hover:bg-[#5465ff] text-white shadow-md shadow-[#635bff]/20 active:scale-[0.98]'
-                                                    : 'bg-neutral-900 hover:bg-[#635bff] text-white dark:bg-white dark:hover:bg-[#635bff] dark:text-neutral-900 dark:hover:text-white active:scale-[0.98]'
+                                                    ? 'bg-[#635bff] hover:bg-[#5465ff] text-white shadow-md shadow-[#635bff]/25 hover:shadow-xl hover:shadow-[#635bff]/40 hover:scale-[1.025] active:scale-[0.98]'
+                                                    : 'bg-neutral-900 hover:bg-[#635bff] text-white dark:bg-white dark:hover:bg-[#635bff] dark:text-neutral-900 dark:hover:text-white shadow-sm hover:shadow-xl hover:shadow-[#635bff]/30 hover:scale-[1.025] active:scale-[0.98]'
                                             }`}
                                         >
+                                            {/* Smooth light shimmer beam animation on hover */}
+                                            {!isCurrent && (
+                                                <span className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                                            )}
+
                                             {isSubmitting === plan.slug ? (
-                                                <>
+                                                <span className="relative z-10 flex items-center gap-2">
                                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                                     <span>Updating...</span>
-                                                </>
+                                                </span>
                                             ) : isCurrent ? (
-                                                <>
+                                                <span className="relative z-10 flex items-center gap-1.5">
                                                     <Check className="w-3.5 h-3.5 text-emerald-500" />
                                                     <span>Current Plan</span>
-                                                </>
+                                                </span>
                                             ) : (
-                                                <span>{plan.button_text || 'Get Started'}</span>
+                                                <span className="relative z-10 flex items-center gap-1.5 transition-transform duration-200 group-hover/btn:translate-x-0.5">
+                                                    <span>{plan.button_text || 'Get Started'}</span>
+                                                </span>
                                             )}
                                         </button>
                                     </div>
