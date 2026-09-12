@@ -6,21 +6,23 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\AiSetting;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class AiSettingSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create or update Default Administrator
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@dynime.com'],
-            [
-                'name' => 'Dynime AI Administrator',
-                'password' => Hash::make('Dynime@2026!'),
-                'role' => 'admin',
-                'avatar_url' => 'https://ui-avatars.com/api/?name=Dynime+Admin&background=6d28d9&color=fff',
-            ]
-        );
+        // 1. Create or retrieve Admin
+        $admin = User::where('email', 'admin@dynime.com')->first();
+        if (!$admin) {
+            $admin = new User();
+            $admin->email = 'admin@dynime.com';
+            $admin->name = 'Dynime AI Administrator';
+            $admin->password = Hash::make('Dynime@2026!');
+            if (Schema::hasColumn('users', 'type')) $admin->type = 'company';
+            if (Schema::hasColumn('users', 'role')) $admin->role = 'admin';
+            $admin->save();
+        }
 
         // 2. Preset AI Providers with modern catalog
         $providers = [

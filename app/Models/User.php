@@ -11,14 +11,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'avatar_url',
-        'role',
-        'sso_id',
-    ];
+    protected $guarded = [];
 
     protected $hidden = [
         'password',
@@ -38,8 +31,25 @@ class User extends Authenticatable
         return $this->hasMany(AiConversation::class);
     }
 
+    public function getRoleAttribute(): string
+    {
+        return $this->attributes['role'] ?? ($this->attributes['type'] ?? 'user');
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (!empty($this->attributes['avatar_url'])) {
+            return $this->attributes['avatar_url'];
+        }
+        if (!empty($this->attributes['avatar']) && $this->attributes['avatar'] !== 'avatar.png') {
+            return asset('uploads/users-avatar/' . $this->attributes['avatar']);
+        }
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name ?? 'User') . '&background=6d28d9&color=fff';
+    }
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin' || $this->role === 'superadmin';
+        $r = $this->role;
+        return in_array($r, ['admin', 'superadmin', 'company', 'super admin']);
     }
 }
