@@ -43,6 +43,72 @@ class ChatController extends Controller
 
         $activeProviders = AiSetting::where('is_active', true)->get(['id', 'provider', 'display_name', 'default_model']);
 
+        $availableModels = [
+            [
+                'id' => 'dcomposer',
+                'name' => 'DComposer',
+                'provider' => 'dcomposer',
+                'badge' => 'Flagship',
+                'description' => 'Unified multi-model enterprise orchestrator (Auto-routing)',
+            ],
+            [
+                'id' => 'claude-3-7-sonnet-20250219',
+                'name' => 'Claude 3.7 Sonnet',
+                'provider' => 'claude',
+                'badge' => 'Hybrid Reasoning',
+                'description' => 'Anthropic hybrid reasoning & architecture design',
+            ],
+            [
+                'id' => 'claude-3-5-sonnet-20241022',
+                'name' => 'Claude 3.5 Sonnet',
+                'provider' => 'claude',
+                'badge' => 'Coding Leader',
+                'description' => 'Anthropic high-speed coding & analysis',
+            ],
+            [
+                'id' => 'deepseek-chat',
+                'name' => 'DeepSeek V3',
+                'provider' => 'deepseek',
+                'badge' => 'Fast Flagship',
+                'description' => 'State-of-the-art open conversational intelligence',
+            ],
+            [
+                'id' => 'deepseek-reasoner',
+                'name' => 'DeepSeek R1',
+                'provider' => 'deepseek',
+                'badge' => 'Deep Reasoning',
+                'description' => 'Mathematical, algorithmic & causal reasoning',
+            ],
+            [
+                'id' => 'gemini-3.6-flash',
+                'name' => 'Gemini 3.6 Flash',
+                'provider' => 'gemini',
+                'badge' => 'Next-Gen Fast',
+                'description' => 'Google multimodal 1M+ token context',
+            ],
+            [
+                'id' => 'gpt-4o',
+                'name' => 'OpenAI GPT-4o',
+                'provider' => 'openai',
+                'badge' => 'Omni',
+                'description' => 'OpenAI omni multimodal flagship',
+            ],
+            [
+                'id' => 'llama-3.3-70b-versatile',
+                'name' => 'Groq Llama 3.3',
+                'provider' => 'groq',
+                'badge' => '⚡ Instant LPU',
+                'description' => 'Sub-second real-time token generation',
+            ],
+            [
+                'id' => 'glm-5.2',
+                'name' => 'Zai GLM-5.2',
+                'provider' => 'zai',
+                'badge' => 'Cognitive',
+                'description' => 'Bilingual cognitive reasoning engine',
+            ],
+        ];
+
         $capabilities = [
             ['id' => 'auto', 'name' => 'Auto-Orchestrate', 'description' => 'Dynamic multi-model routing', 'badge' => 'Smart'],
             ['id' => 'fast', 'name' => 'Fast & Light', 'description' => 'Low-latency instantaneous replies', 'badge' => '⚡ Fast'],
@@ -53,11 +119,134 @@ class ChatController extends Controller
             ['id' => 'creative', 'name' => 'Creative & Copy', 'description' => 'High-engagement copy & messaging', 'badge' => '✨ Creative'],
         ];
 
+        $essentialSkills = [
+            [
+                'id' => 'financial_analyst',
+                'name' => 'Financial Analyst',
+                'icon' => 'TrendingUp',
+                'description' => 'Institutional DCF, P&L, balance-sheet hygiene & valuation models',
+                'badge' => 'Finance',
+            ],
+            [
+                'id' => 'code_specialist',
+                'name' => 'Code Reviewer & Architect',
+                'icon' => 'Code2',
+                'description' => 'Production clean code, TypeScript, PHP, microservices & refactoring',
+                'badge' => 'Dev',
+            ],
+            [
+                'id' => 'legal_auditor',
+                'name' => 'Legal & Contract Auditor',
+                'icon' => 'ShieldCheck',
+                'description' => 'Compliance, MSA agreements, SLAs, liability & NDA risk analysis',
+                'badge' => 'Legal',
+            ],
+            [
+                'id' => 'sql_analyst',
+                'name' => 'SQL & Data Architect',
+                'icon' => 'Database',
+                'description' => 'Schema design, index tuning, star queries & execution plans',
+                'badge' => 'Data',
+            ],
+            [
+                'id' => 'executive_memo',
+                'name' => 'Executive Memo Drafter',
+                'icon' => 'FileSpreadsheet',
+                'description' => 'Board-level memos, strategic theses, operational milestones',
+                'badge' => 'C-Suite',
+            ],
+            [
+                'id' => 'deep_research',
+                'name' => 'Deep Research Agent',
+                'icon' => 'Compass',
+                'description' => 'Multi-source empirical research, market trends & synthesized briefs',
+                'badge' => 'Research',
+            ],
+        ];
+
+        $connectors = [
+            [
+                'id' => 'erp_db',
+                'name' => 'ERP Go Database',
+                'icon' => 'Building2',
+                'status' => 'connected',
+                'badge' => 'Live Connected',
+                'description' => 'Real-time synchronization with ERP entities and CRM accounts',
+            ],
+            [
+                'id' => 'hostinger_server',
+                'name' => 'Hostinger Cloud Infrastructure',
+                'icon' => 'Server',
+                'status' => 'connected',
+                'badge' => 'Live Connected',
+                'description' => 'Direct SSH/SFTP deployment and log monitoring pipeline',
+            ],
+            [
+                'id' => 'smtp_mail',
+                'name' => 'Corporate Email / SMTP',
+                'icon' => 'Mail',
+                'status' => 'connected',
+                'badge' => 'Active',
+                'description' => 'Outbound notification and report dissemination pipeline',
+            ],
+            [
+                'id' => 'google_workspace',
+                'name' => 'Google Workspace',
+                'icon' => 'FolderGit2',
+                'status' => 'needs_config',
+                'badge' => 'Ready to Connect',
+                'description' => 'Direct Drive, Docs, and Sheets integration',
+            ],
+            [
+                'id' => 'github_enterprise',
+                'name' => 'GitHub Enterprise',
+                'icon' => 'GitBranch',
+                'status' => 'needs_config',
+                'badge' => 'Ready to Connect',
+                'description' => 'Repository sync, pull request analysis, and CI/CD triggers',
+            ],
+        ];
+
+        $plugins = [
+            [
+                'id' => 'excel_engine',
+                'name' => 'Excel Spreadsheet Engine',
+                'icon' => 'FileSpreadsheet',
+                'active' => true,
+                'description' => 'Generates native .xlsx workbooks with multi-tab financial models',
+            ],
+            [
+                'id' => 'pdf_builder',
+                'name' => 'PDF Document Builder',
+                'icon' => 'FileText',
+                'active' => true,
+                'description' => 'Compiles executive documents and publication-ready memos',
+            ],
+            [
+                'id' => 'python_sandbox',
+                'name' => 'Python Analytics Sandbox',
+                'icon' => 'Terminal',
+                'active' => true,
+                'description' => 'Executes quantitative data modeling and regression scripts',
+            ],
+            [
+                'id' => 'diagram_architect',
+                'name' => 'SVG Diagram Architect',
+                'icon' => 'Layers',
+                'active' => true,
+                'description' => 'Renders interactive architecture, flowcharts, and sequence maps',
+            ],
+        ];
+
         return Inertia::render('Chat/Index', [
             'conversations' => $conversations,
             'initial_conversation' => $activeConv,
             'active_providers' => $activeProviders,
+            'available_models' => $availableModels,
             'capabilities' => $capabilities,
+            'essential_skills' => $essentialSkills,
+            'connectors' => $connectors,
+            'plugins' => $plugins,
         ]);
     }
 
@@ -144,6 +333,9 @@ class ChatController extends Controller
             'conversation_uuid' => 'required|string',
             'message' => 'required|string',
             'capability' => 'nullable|string',
+            'model' => 'nullable|string',
+            'skills' => 'nullable|array',
+            'web_search' => 'nullable|boolean',
             'attachments' => 'nullable|array',
         ]);
 
@@ -152,6 +344,9 @@ class ChatController extends Controller
             ->firstOrFail();
 
         $capability = $request->input('capability', $conv->capability_profile ?? 'auto');
+        $model = $request->input('model', 'dcomposer');
+        $skills = $request->input('skills', []);
+        $webSearch = (bool) $request->input('web_search', false);
         $userInput = $request->input('message');
         $attachments = $request->input('attachments', []);
 
@@ -170,8 +365,17 @@ class ChatController extends Controller
             $conv->save();
         }
 
-        // Orchestrate via DComposer
-        $result = DComposer::process($user, $conv, $userInput, $capability, $attachments);
+        // Orchestrate via DComposer with model, skills and web search
+        $result = DComposer::process(
+            $user,
+            $conv,
+            $userInput,
+            $capability,
+            $attachments,
+            $model,
+            $skills,
+            $webSearch
+        );
 
         $conv->touch();
 
@@ -184,7 +388,7 @@ class ChatController extends Controller
                 'content' => $result['content'],
                 'capability_profile' => $capability,
                 'provider' => $result['provider'] ?? null,
-                'model' => $result['model'] ?? null,
+                'model' => $result['model'] ?? $model,
                 'latency_ms' => $result['latency_ms'] ?? null,
                 'created_at' => now()->toIso8601String(),
             ],
@@ -193,65 +397,6 @@ class ChatController extends Controller
                 'title' => $conv->title,
             ],
         ]);
-    }
-
-    public function stream(Request $request)
-    {
-        $user = Auth::user();
-
-        $uuid = $request->input('c');
-        $userInput = $request->input('m');
-        $capability = $request->input('cap', 'auto');
-
-        $conv = AiConversation::where('user_id', $user->id)
-            ->where('uuid', $uuid)
-            ->firstOrFail();
-
-        // Save user message if not already present
-        $userMsg = AiMessage::create([
-            'conversation_id' => $conv->id,
-            'role' => 'user',
-            'content' => $userInput,
-            'capability_profile' => $capability,
-        ]);
-
-        if ($conv->title === 'New Discussion' || $conv->title === 'New Chat') {
-            $conv->title = Str::limit(trim($userInput), 36, '...');
-            $conv->save();
-        }
-
-        return new StreamedResponse(function () use ($user, $conv, $userInput, $capability) {
-            header('Content-Type: text/event-stream');
-            header('Cache-Control: no-cache');
-            header('Connection: keep-alive');
-            header('X-Accel-Buffering: no');
-
-            echo "data: " . json_encode(['type' => 'status', 'content' => 'Routing through DComposer engine...']) . "\n\n";
-            ob_flush();
-            flush();
-
-            $result = DComposer::process($user, $conv, $userInput, $capability);
-
-            // Stream words or small tokens
-            $content = $result['content'];
-            $chunks = preg_split('/(\s+)/u', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
-            foreach ($chunks as $chunk) {
-                echo "data: " . json_encode(['type' => 'token', 'content' => $chunk]) . "\n\n";
-                ob_flush();
-                flush();
-                usleep(8000); // 8ms typewriter effect
-            }
-
-            echo "data: " . json_encode([
-                'type' => 'done',
-                'message_id' => $result['message_id'],
-                'latency_ms' => $result['latency_ms'] ?? 0,
-                'provider' => $result['provider'] ?? null,
-                'model' => $result['model'] ?? null,
-            ]) . "\n\n";
-            ob_flush();
-            flush();
-        });
     }
 
     public function uploadAttachment(Request $request)

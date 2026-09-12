@@ -19,32 +19,65 @@ class ModelRouter
         };
     }
 
-    public static function getRoutingPlan(string $capability = 'auto'): array
+    public static function getRoutingPlan(string $capability = 'auto', ?string $requestedModel = null): array
     {
         $internalProfile = self::resolveInternalProfile($capability);
+        $emulatedModel = null;
+        $primary = null;
 
-        // 1. Check if an active provider explicitly handles this capability
-        $primary = AiSetting::where('is_active', true)
-            ->get()
-            ->first(function ($setting) use ($capability) {
-                $caps = $setting->capabilities ?: [];
-                return in_array($capability, $caps) || in_array('auto', $caps);
-            });
+        // 1. If a specific model was requested by the user
+        if (!empty($requestedModel) && $requestedModel !== 'dcomposer' && $requestedModel !== 'auto') {
+            // Find setting by model name or provider name
+            $matchedSetting = AiSetting::where('is_active', true)
+                ->where(function ($query) use ($requestedModel) {
+                    $query->where('default_model', $requestedModel)
+                        ->orWhere('provider', $requestedModel)
+                        ->orWhere('display_name', 'like', "%{$requestedModel}%");
+                })
+                ->first();
 
-        // 2. Fallback to any active setting
+            if ($matchedSetting && !empty($matchedSetting->getDecryptedApiKey())) {
+                $primary = $matchedSetting;
+            } else {
+                // The requested model doesn't have a direct API key yet.
+                // We will route through the flagship active engine (DeepSeek / Gemini),
+                // but pass an emulatedModel persona so DComposer styles output accordingly!
+                $emulatedModel = $requestedModel;
+            }
+        }
+
+        // 2. Default routing if no specific model or if fallback needed
+        if (!$primary) {
+            // Priority to deepseek or gemini which have verified active keys
+            $primary = AiSetting::where('is_active', true)
+                ->whereIn('provider', ['deepseek', 'gemini'])
+                ->whereNotNull('api_key')
+                ->first();
+        }
+
+        // 3. Fallback to any active setting with a key
+        if (!$primary) {
+            $allActive = AiSetting::where('is_active', true)->get();
+            $primary = $allActive->first(fn($s) => !empty($s->getDecryptedApiKey()) || $s->provider === 'ollama');
+        }
+
+        // 4. Absolute fallback
         if (!$primary) {
             $primary = AiSetting::where('is_active', true)->first();
         }
 
-        // 3. Fallback pool of other configured providers
+        // 5. Fallback pool
         $fallbackPool = AiSetting::where('is_active', true)
             ->when($primary, fn($q) => $q->where('id', '!=', $primary->id))
-            ->get();
+            ->get()
+            ->filter(fn($s) => !empty($s->getDecryptedApiKey()) || $s->provider === 'ollama');
 
         return [
             'internal_profile' => $internalProfile,
             'primary' => $primary,
             'fallback_pool' => $fallbackPool,
+            'emulated_model' => $emulatedModel,
+            'requested_model' => $requestedModel ?: 'dcomposer',
         ];
     }
 }
