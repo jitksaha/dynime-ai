@@ -1,0 +1,123 @@
+{
+  "_AppLayout-a7uN_50I.js": {
+    "file": "assets/AppLayout-a7uN_50I.js",
+    "name": "AppLayout",
+    "imports": [
+      "_button-uwGvNV5N.js",
+      "resources/js/app.tsx"
+    ]
+  },
+  "_button-uwGvNV5N.js": {
+    "file": "assets/button-uwGvNV5N.js",
+    "name": "button",
+    "imports": [
+      "resources/js/app.tsx"
+    ]
+  },
+  "_circle-check-4u764NWq.js": {
+    "file": "assets/circle-check-4u764NWq.js",
+    "name": "circle-check",
+    "imports": [
+      "_button-uwGvNV5N.js"
+    ]
+  },
+  "_eye-DHmRd566.js": {
+    "file": "assets/eye-DHmRd566.js",
+    "name": "eye",
+    "imports": [
+      "_button-uwGvNV5N.js"
+    ]
+  },
+  "_input-CwdlIoII.js": {
+    "file": "assets/input-CwdlIoII.js",
+    "name": "input",
+    "imports": [
+      "resources/js/app.tsx",
+      "_button-uwGvNV5N.js"
+    ]
+  },
+  "_label-nng2FIuk.js": {
+    "file": "assets/label-nng2FIuk.js",
+    "name": "label",
+    "imports": [
+      "resources/js/app.tsx",
+      "_button-uwGvNV5N.js"
+    ]
+  },
+  "_rotate-cw-VqceDo1E.js": {
+    "file": "assets/rotate-cw-VqceDo1E.js",
+    "name": "rotate-cw",
+    "imports": [
+      "_button-uwGvNV5N.js"
+    ]
+  },
+  "resources/js/app.tsx": {
+    "file": "assets/app-hYFuOTHw.js",
+    "name": "app",
+    "src": "resources/js/app.tsx",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/pages/Admin/Index.tsx",
+      "resources/js/pages/Admin/Settings.tsx",
+      "resources/js/pages/Auth/Login.tsx",
+      "resources/js/pages/Chat/Index.tsx"
+    ],
+    "css": [
+      "assets/app-Dn8TOcv9.css"
+    ]
+  },
+  "resources/js/pages/Admin/Index.tsx": {
+    "file": "assets/Index-Dg_AkiVG.js",
+    "name": "Index",
+    "src": "resources/js/pages/Admin/Index.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_AppLayout-a7uN_50I.js",
+      "_button-uwGvNV5N.js",
+      "_rotate-cw-VqceDo1E.js",
+      "_circle-check-4u764NWq.js"
+    ]
+  },
+  "resources/js/pages/Admin/Settings.tsx": {
+    "file": "assets/Settings-DxVXIfge.js",
+    "name": "Settings",
+    "src": "resources/js/pages/Admin/Settings.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_AppLayout-a7uN_50I.js",
+      "_button-uwGvNV5N.js",
+      "_input-CwdlIoII.js",
+      "_label-nng2FIuk.js",
+      "_rotate-cw-VqceDo1E.js",
+      "_eye-DHmRd566.js"
+    ]
+  },
+  "resources/js/pages/Auth/Login.tsx": {
+    "file": "assets/Login-CrJmERdT.js",
+    "name": "Login",
+    "src": "resources/js/pages/Auth/Login.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_button-uwGvNV5N.js",
+      "_input-CwdlIoII.js",
+      "_label-nng2FIuk.js",
+      "_circle-check-4u764NWq.js"
+    ]
+  },
+  "resources/js/pages/Chat/Index.tsx": {
+    "file": "assets/Index-CXNIpGbT.js",
+    "name": "Index",
+    "src": "resources/js/pages/Chat/Index.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.tsx",
+      "_AppLayout-a7uN_50I.js",
+      "_button-uwGvNV5N.js",
+      "_input-CwdlIoII.js",
+      "_eye-DHmRd566.js"
+    ]
+  }
+}
