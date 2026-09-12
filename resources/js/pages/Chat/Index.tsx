@@ -383,8 +383,10 @@ export default function ChatIndex({
         .toUpperCase()
         .slice(0, 2);
 
+    // Pricing Modal State
+    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+    const [userPlan, setUserPlan] = useState<string>(current_plan_slug);
     const isProUser = (userPlan && userPlan.toLowerCase() !== 'free') || (current_plan_slug && current_plan_slug !== 'free');
-
 
     const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
     const [activeConv, setActiveConv] = useState<Conversation | null>(initial_conversation);
@@ -403,10 +405,6 @@ export default function ChatIndex({
     const [isToolsTimelineOpen, setIsToolsTimelineOpen] = useState(false);
     const [editingConvUuid, setEditingConvUuid] = useState<string | null>(null);
     const [editTitleInput, setEditTitleInput] = useState('');
-
-    // Pricing Modal State
-    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
-    const [userPlan, setUserPlan] = useState<string>(current_plan_slug);
 
     // Model Selector State (Default: DComposer)
     const [selectedModel, setSelectedModel] = useState<string>('dcomposer');
