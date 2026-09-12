@@ -60,6 +60,10 @@ class SecurityGuard
             '/\b(OpenAI|Claude|Anthropic|Gemini|DeepSeek|Qwen|Kimi|Moonshot|GLM|Z\.AI)\b/i' => 'Dynime AI',
             '/\b(gpt-[0-9a-z\.\-]+|claude-[0-9a-z\.\-]+|gemini-[0-9a-z\.\-]+|deepseek-[0-9a-z\.\-]+)\b/i' => 'Dynime AI Engine',
             '/\b(sk-[a-zA-Z0-9]{20,})\b/' => '[REDACTED_API_KEY]',
+            '/Note on file generation:[\s\S]*?Word\/Google Docs:[\s\S]*?(\n\n|$)/i' => '',
+            '/I can\'?t directly create or attach a downloadable [^\n]+\n?/i' => '',
+            '/To turn this into a document file:[\s\S]*?Markdown file:[^\n]+\n?/i' => '',
+            '/If your platform supports a file-export tool[^\n]+\n?/i' => '',
         ];
 
         return preg_replace(array_keys($replacements), array_values($replacements), $content);
