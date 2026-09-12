@@ -12,7 +12,7 @@ use App\Services\DynimeSSOClient;
 
 class AuthController extends Controller
 {
-    public function showLogin()
+    public function showLogin(Request $request)
     {
         if (Auth::check()) {
             return redirect()->route('chat.index');
@@ -20,6 +20,11 @@ class AuthController extends Controller
 
         $ssoClient = new DynimeSSOClient();
         $ssoLoginUrl = $ssoClient->getLoginUrl(route('auth.sso.callback'));
+
+        // If not requesting explicit local emergency login (?local=1), redirect straight to account.dynime.com
+        if (!$request->has('local')) {
+            return redirect()->away($ssoLoginUrl);
+        }
 
         return Inertia::render('Auth/Login', [
             'sso_login_url' => $ssoLoginUrl,
@@ -54,14 +59,14 @@ class AuthController extends Controller
         $ticket = $request->query('ticket');
 
         if (empty($ticket)) {
-            return redirect()->route('login')->withErrors(['sso' => 'SSO Ticket missing from Account Center callback.']);
+            return redirect()->away('https://account.dynime.com/login?client_id=dynime_ai_app&redirect=' . urlencode(route('auth.sso.callback')));
         }
 
         $ssoClient = new DynimeSSOClient();
         $verification = $ssoClient->verifyTicket($ticket);
 
         if (!$verification || empty($verification['success']) || empty($verification['user'])) {
-            return redirect()->route('login')->withErrors(['sso' => 'SSO Ticket verification failed with Account Center.']);
+            return redirect()->away('https://account.dynime.com/login?client_id=dynime_ai_app&redirect=' . urlencode(route('auth.sso.callback')));
         }
 
         $ssoUserData = $verification['user'];
@@ -74,18 +79,31 @@ class AuthController extends Controller
 
         if ($user) {
             $user->name = $name;
-            $user->sso_id = (string)$ssoId;
-            $user->avatar_url = $avatar;
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'sso_id')) {
+                $user->sso_id = (string)$ssoId;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'avatar_url')) {
+                $user->avatar_url = $avatar;
+            }
             $user->save();
         } else {
-            $user = User::create([
-                'name' => $name,
-                'email' => $email,
-                'password' => Hash::make(Str::random(32)),
-                'avatar_url' => $avatar,
-                'role' => 'user',
-                'sso_id' => (string)$ssoId,
-            ]);
+            $user = new User();
+            $user->name = $name;
+            $user->email = $email;
+            $user->password = Hash::make(Str::random(32));
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'role')) {
+                $user->role = 'user';
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'type')) {
+                $user->type = 'company';
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'sso_id')) {
+                $user->sso_id = (string)$ssoId;
+            }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'avatar_url')) {
+                $user->avatar_url = $avatar;
+            }
+            $user->save();
         }
 
         Auth::login($user, true);
@@ -100,6 +118,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->away('https://account.dynime.com/login?client_id=dynime_ai_app&redirect=' . urlencode(route('auth.sso.callback')));
     }
 }
