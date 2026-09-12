@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import axios from 'axios';
 import {
     Sparkles,
     ArrowUp,
     Plus,
-    Search,
     Paperclip,
     Trash2,
     Pin,
@@ -16,7 +14,6 @@ import {
     Bot,
     User as UserIcon,
     Zap,
-    Brain,
     Code2,
     Compass,
     FileText,
@@ -30,16 +27,16 @@ import {
     ChevronDown,
     ChevronUp,
     ExternalLink,
-    CheckCircle2,
     Globe,
     Layers,
     FileSpreadsheet,
     Palette,
     Clock,
-    Share2,
     RefreshCw,
     Network,
     Lightbulb,
+    Sun,
+    Moon,
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -99,6 +96,9 @@ export default function ChatIndex({
     const { auth } = usePage().props as any;
     const user = auth?.user;
 
+    // Theme state: default 'light'
+    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
     const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
     const [activeConv, setActiveConv] = useState<Conversation | null>(initial_conversation);
     const [messages, setMessages] = useState<Message[]>(initial_conversation?.messages || []);
@@ -111,13 +111,79 @@ export default function ChatIndex({
     const [isUploading, setIsUploading] = useState(false);
     const [copiedId, setCopiedId] = useState<number | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
     const [isToolsCollapsed, setIsToolsCollapsed] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const chatInputRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Initialize Theme on mount (Default: Light)
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('dynime_theme') || 'light';
+            setTheme(saved as 'light' | 'dark');
+            if (saved === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        } catch (e) {
+            setTheme('light');
+            document.documentElement.classList.remove('dark');
+        }
+    }, []);
+
+    // Telegram-Style Circular Transition Theme Switcher
+    const toggleTheme = (e?: React.MouseEvent) => {
+        const nextTheme = theme === 'dark' ? 'light' : 'dark';
+
+        const applyTheme = () => {
+            setTheme(nextTheme);
+            if (nextTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            try {
+                localStorage.setItem('dynime_theme', nextTheme);
+            } catch (err) {}
+        };
+
+        // Check for View Transitions API support
+        if (!(document as any).startViewTransition || !e) {
+            applyTheme();
+            return;
+        }
+
+        const x = e.clientX;
+        const y = e.clientY;
+        const endRadius = Math.hypot(
+            Math.max(x, window.innerWidth - x),
+            Math.max(y, window.innerHeight - y)
+        );
+
+        const transition = (document as any).startViewTransition(() => {
+            applyTheme();
+        });
+
+        transition.ready.then(() => {
+            const clipPath = [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${endRadius}px at ${x}px ${y}px)`,
+            ];
+            document.documentElement.animate(
+                {
+                    clipPath: clipPath,
+                },
+                {
+                    duration: 500,
+                    easing: 'cubic-bezier(0.2, 0, 0, 1)',
+                    pseudoElement: '::view-transition-new(root)',
+                }
+            );
+        });
+    };
 
     // Auto-scroll
     useEffect(() => {
@@ -330,73 +396,81 @@ export default function ChatIndex({
         { id: 'deep_thinking', label: 'Design', icon: Palette },
     ];
 
-    // Helper to format assistant markdown content cleanly
+    // Helper to format assistant markdown content cleanly with rich typography
     const formatAssistantMessage = (content: string) => {
-        // Simple and clean formatting for bold and code
         const parts = content.split('\n');
         return (
-            <div className="space-y-2 text-sm leading-relaxed text-neutral-200">
+            <div className="space-y-3 text-[15px] leading-7 text-neutral-800 dark:text-neutral-200">
                 {parts.map((paragraph, pIdx) => {
                     if (!paragraph.trim()) {
-                        return <div key={pIdx} className="h-1.5" />;
+                        return <div key={pIdx} className="h-2" />;
                     }
 
                     // Headers
                     if (paragraph.startsWith('### ')) {
                         return (
-                            <h3 key={pIdx} className="text-base font-semibold text-white mt-3 mb-1">
+                            <h3 key={pIdx} className="text-base font-semibold text-neutral-900 dark:text-white mt-4 mb-1">
                                 {paragraph.replace('### ', '')}
                             </h3>
                         );
                     }
                     if (paragraph.startsWith('## ')) {
                         return (
-                            <h2 key={pIdx} className="text-lg font-bold text-white mt-4 mb-2">
+                            <h2 key={pIdx} className="text-lg font-bold text-neutral-900 dark:text-white mt-5 mb-2">
                                 {paragraph.replace('## ', '')}
                             </h2>
+                        );
+                    }
+                    if (paragraph.startsWith('# ')) {
+                        return (
+                            <h1 key={pIdx} className="text-xl font-extrabold text-neutral-900 dark:text-white mt-6 mb-2">
+                                {paragraph.replace('# ', '')}
+                            </h1>
                         );
                     }
 
                     // Bullet lists
                     if (paragraph.trim().startsWith('- ') || paragraph.trim().startsWith('* ')) {
                         return (
-                            <div key={pIdx} className="flex items-start gap-2 ml-1">
-                                <span className="text-purple-400 mt-1">•</span>
-                                <span>{paragraph.trim().slice(2)}</span>
+                            <div key={pIdx} className="flex items-start gap-2.5 ml-1">
+                                <span className="text-purple-600 dark:text-purple-400 mt-1.5 text-xs select-none">•</span>
+                                <span className="flex-1">{paragraph.trim().slice(2)}</span>
                             </div>
                         );
                     }
 
-                    return <p key={pIdx}>{paragraph}</p>;
+                    return <p key={pIdx} className="leading-relaxed">{paragraph}</p>;
                 })}
             </div>
         );
     };
 
     return (
-        <div className="flex h-screen w-screen overflow-hidden bg-[#0c0c0f] text-[#ececed] font-sans antialiased selection:bg-purple-600 selection:text-white">
+        <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0c0c0f] text-neutral-900 dark:text-neutral-100 font-sans antialiased selection:bg-purple-600 selection:text-white transition-colors duration-200">
             <Head title="Dynime AI - Enterprise Intelligence" />
 
             {/* Left Kimi-Style Sidebar */}
             <aside
-                className={`fixed inset-y-0 left-0 z-40 md:static flex flex-col w-64 bg-[#111115] border-r border-white/[0.06] transition-all duration-300 shadow-2xl md:shadow-none ${
+                className={`fixed inset-y-0 left-0 z-40 md:static flex flex-col w-64 bg-[#f6f6f8] dark:bg-[#111115] border-r border-neutral-200/80 dark:border-white/[0.06] transition-all duration-300 shadow-2xl md:shadow-none ${
                     isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-none'
                 }`}
             >
                 {/* Brand & Collapse Header */}
-                <div className="h-14 px-4 flex items-center justify-between border-b border-white/[0.06]">
+                <div className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06]">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-500 flex items-center justify-center shadow-md shadow-purple-600/25">
-                            <Sparkles className="w-4 h-4 text-white" />
-                        </div>
-                        <span className="font-heading font-bold text-sm tracking-wider text-white">
+                        <img
+                            src="https://cdn.dynime.com/Dynime%20Logo/LOGO%20PNG/dynime-logo.png"
+                            alt="Dynime AI"
+                            className="h-6 w-auto object-contain"
+                        />
+                        <span className="font-heading font-black text-sm tracking-widest text-neutral-900 dark:text-white">
                             DYNIME
                         </span>
                     </div>
 
                     <button
                         onClick={() => setIsSidebarOpen(false)}
-                        className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                        className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-200/60 dark:hover:bg-white/[0.06] transition-colors"
                         title="Collapse sidebar"
                     >
                         <PanelLeftClose className="w-4 h-4" />
@@ -407,31 +481,31 @@ export default function ChatIndex({
                 <div className="p-3">
                     <button
                         onClick={handleNewChat}
-                        className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] hover:border-purple-500/30 border border-white/[0.07] text-white text-xs font-medium transition-all shadow-sm group"
+                        className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-neutral-100 dark:hover:bg-white/[0.08] border border-neutral-200/80 dark:border-white/[0.07] text-neutral-800 dark:text-white text-xs font-medium transition-all shadow-xs group"
                     >
                         <div className="flex items-center gap-2">
-                            <Plus className="w-4 h-4 text-purple-400 group-hover:rotate-90 transition-transform duration-200" />
+                            <Plus className="w-4 h-4 text-purple-600 dark:text-purple-400 group-hover:rotate-90 transition-transform duration-200" />
                             <span>New Chat</span>
                         </div>
-                        <kbd className="text-[10px] font-mono text-neutral-400 px-1.5 py-0.5 rounded bg-black/50 border border-white/10 group-hover:text-purple-300">
+                        <kbd className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-black/50 border border-neutral-200 dark:border-white/10 group-hover:text-purple-600 dark:group-hover:text-purple-300">
                             ⌘ K
                         </kbd>
                     </button>
                 </div>
 
                 {/* Kimi Menu Navigation List */}
-                <div className="px-2 py-1 space-y-0.5 text-xs text-neutral-300">
+                <div className="px-2 py-1 space-y-0.5 text-xs text-neutral-600 dark:text-neutral-300">
                     <button
                         onClick={handleNewChat}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.05] hover:text-white transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
                     >
-                        <Sparkles className="w-4 h-4 text-purple-400" />
-                        <span>My Dynime</span>
+                        <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        <span className="font-medium">My Dynime</span>
                     </button>
 
                     <button
                         onClick={() => toast.info('Scheduled automated agent tasks are active.')}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.05] hover:text-white transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
                     >
                         <Clock className="w-4 h-4 text-neutral-400" />
                         <span>Scheduled Tasks</span>
@@ -442,7 +516,7 @@ export default function ChatIndex({
                             setSelectedCapability('auto');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.05] hover:text-white transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
                     >
                         <Network className="w-4 h-4 text-neutral-400" />
                         <span>Swarm</span>
@@ -453,7 +527,7 @@ export default function ChatIndex({
                             setSelectedCapability('creative');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.05] hover:text-white transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
                     >
                         <Layers className="w-4 h-4 text-neutral-400" />
                         <span>Slides</span>
@@ -464,7 +538,7 @@ export default function ChatIndex({
                             setSelectedCapability('research');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/[0.05] hover:text-white transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
                     >
                         <Compass className="w-4 h-4 text-neutral-400" />
                         <span>Deep Research</span>
@@ -473,11 +547,9 @@ export default function ChatIndex({
                     {/* Collapse Tools Section */}
                     <button
                         onClick={() => setIsToolsCollapsed(!isToolsCollapsed)}
-                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-white/[0.05] text-neutral-400 hover:text-white transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                     >
-                        <div className="flex items-center gap-2.5">
-                            <span className="text-[11px] uppercase tracking-wider font-semibold">Workspace</span>
-                        </div>
+                        <span className="text-[11px] uppercase tracking-wider font-semibold">Workspace</span>
                         {isToolsCollapsed ? (
                             <ChevronDown className="w-3.5 h-3.5" />
                         ) : (
@@ -492,9 +564,9 @@ export default function ChatIndex({
                                     setSelectedCapability('fast');
                                     handleNewChat();
                                 }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/[0.05] text-neutral-400 hover:text-white transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                             >
-                                <Globe className="w-3.5 h-3.5 text-neutral-400" />
+                                <Globe className="w-3.5 h-3.5" />
                                 <span>Websites</span>
                             </button>
 
@@ -503,9 +575,9 @@ export default function ChatIndex({
                                     setSelectedCapability('vision');
                                     handleNewChat();
                                 }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/[0.05] text-neutral-400 hover:text-white transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                             >
-                                <FileText className="w-3.5 h-3.5 text-neutral-400" />
+                                <FileText className="w-3.5 h-3.5" />
                                 <span>Docs</span>
                             </button>
 
@@ -514,9 +586,9 @@ export default function ChatIndex({
                                     setSelectedCapability('coding');
                                     handleNewChat();
                                 }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/[0.05] text-neutral-400 hover:text-white transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                             >
-                                <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
+                                <FileSpreadsheet className="w-3.5 h-3.5" />
                                 <span>Sheets</span>
                             </button>
 
@@ -525,9 +597,9 @@ export default function ChatIndex({
                                     setSelectedCapability('deep_thinking');
                                     handleNewChat();
                                 }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/[0.05] text-neutral-400 hover:text-white transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                             >
-                                <Palette className="w-3.5 h-3.5 text-neutral-400" />
+                                <Palette className="w-3.5 h-3.5" />
                                 <span>Design</span>
                             </button>
 
@@ -536,9 +608,9 @@ export default function ChatIndex({
                                     setSelectedCapability('coding');
                                     handleNewChat();
                                 }}
-                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/[0.05] text-neutral-400 hover:text-white transition-colors"
+                                className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                             >
-                                <Code2 className="w-3.5 h-3.5 text-purple-400" />
+                                <Code2 className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                                 <span>Dynime Code</span>
                             </button>
                         </div>
@@ -546,13 +618,13 @@ export default function ChatIndex({
                 </div>
 
                 {/* Discussions List */}
-                <div className="flex-1 overflow-y-auto px-2 mt-2 space-y-1 border-t border-white/[0.05] pt-2">
-                    <div className="px-2 pt-1 pb-1 text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
+                <div className="flex-1 overflow-y-auto px-2 mt-2 space-y-1 border-t border-neutral-200/80 dark:border-white/[0.05] pt-2">
+                    <div className="px-2 pt-1 pb-1 text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
                         Recent Chats
                     </div>
 
                     {conversations.length === 0 ? (
-                        <div className="px-3 py-4 text-center text-xs text-neutral-500">
+                        <div className="px-3 py-4 text-center text-xs text-neutral-400">
                             No chat history yet.
                         </div>
                     ) : (
@@ -564,26 +636,26 @@ export default function ChatIndex({
                                     onClick={() => handleSelectConversation(conv)}
                                     className={`group flex items-center justify-between px-3 py-2 rounded-lg text-xs cursor-pointer transition-all ${
                                         isActive
-                                            ? 'bg-gradient-to-r from-purple-950/60 via-purple-900/30 to-transparent text-purple-200 border-l-2 border-purple-500 font-medium'
-                                            : 'text-neutral-300 hover:bg-white/[0.04] hover:text-white'
+                                            ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-200 border-l-2 border-purple-600 font-semibold'
+                                            : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200/50 dark:hover:bg-white/[0.04] hover:text-neutral-900 dark:hover:text-white'
                                     }`}
                                 >
                                     <div className="flex items-center gap-2 min-w-0 pr-1">
-                                        {conv.is_pinned && <Pin className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />}
+                                        {conv.is_pinned && <Pin className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" />}
                                         <span className="truncate">{conv.title}</span>
                                     </div>
 
                                     <div className="hidden group-hover:flex items-center gap-1 flex-shrink-0">
                                         <button
                                             onClick={(e) => handleTogglePin(e, conv)}
-                                            className="p-1 rounded hover:bg-white/10 text-neutral-400 hover:text-amber-400"
+                                            className="p-1 rounded hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-400 hover:text-amber-500"
                                             title="Pin"
                                         >
                                             <Pin className="w-3 h-3" />
                                         </button>
                                         <button
                                             onClick={(e) => handleDeleteConversation(e, conv)}
-                                            className="p-1 rounded hover:bg-rose-950/50 text-neutral-400 hover:text-rose-400"
+                                            className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-950/50 text-neutral-400 hover:text-rose-500"
                                             title="Delete"
                                         >
                                             <Trash2 className="w-3 h-3" />
@@ -595,23 +667,23 @@ export default function ChatIndex({
                     )}
                 </div>
 
-                {/* Footer User / Account Center */}
-                <div className="p-3 border-t border-white/[0.06] bg-[#0f0f13]">
+                {/* Footer User / Account Center / Theme Toggle */}
+                <div className="p-3 border-t border-neutral-200/80 dark:border-white/[0.06] bg-[#f0f0f3] dark:bg-[#0f0f13]">
                     {user ? (
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <img
                                     src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6d28d9&color=fff`}
                                     alt={user.name}
-                                    className="w-8 h-8 rounded-lg object-cover border border-white/10"
+                                    className="w-8 h-8 rounded-lg object-cover border border-neutral-200 dark:border-white/10"
                                 />
                                 <div className="truncate">
-                                    <p className="text-xs font-semibold text-white truncate">{user.name}</p>
+                                    <p className="text-xs font-semibold text-neutral-900 dark:text-white truncate">{user.name}</p>
                                     <a
                                         href="https://account.dynime.com"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[10px] text-purple-400 hover:text-purple-300 hover:underline flex items-center gap-0.5"
+                                        className="text-[10px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-0.5"
                                     >
                                         <span>Account Center</span>
                                         <ExternalLink className="w-2.5 h-2.5" />
@@ -619,18 +691,27 @@ export default function ChatIndex({
                                 </div>
                             </div>
 
-                            <button
-                                onClick={() => router.post('/logout')}
-                                className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-white/[0.06] transition-colors"
-                                title="Sign out"
-                            >
-                                <LogOut className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={toggleTheme}
+                                    className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-200/60 dark:hover:bg-white/[0.06] transition-colors"
+                                    title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}
+                                >
+                                    {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-neutral-600" />}
+                                </button>
+                                <button
+                                    onClick={() => router.post('/logout')}
+                                    className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-white/[0.06] transition-colors"
+                                    title="Sign out"
+                                >
+                                    <LogOut className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <a
                             href={ssoLoginUrl}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-medium transition-all shadow-md shadow-purple-600/20"
+                            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium transition-all shadow-sm"
                         >
                             <Shield className="w-3.5 h-3.5" />
                             <span>Log in via Dynime Account</span>
@@ -639,43 +720,62 @@ export default function ChatIndex({
                 </div>
             </aside>
 
-            {/* Main Area with subtle gradient lighting */}
-            <main className="flex-1 flex flex-col h-full bg-[#0c0c0f] relative overflow-hidden">
-                {/* Subtle Luxury Ambient Radial Glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-purple-900/15 via-indigo-900/5 to-transparent blur-3xl pointer-events-none -z-0" />
+            {/* Main Canvas Area */}
+            <main className="flex-1 flex flex-col h-full bg-white dark:bg-[#0c0c0f] relative overflow-hidden transition-colors duration-200">
+                {/* Subtle Ambient Radial Glow in Dark Mode */}
+                <div className="hidden dark:block absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-purple-900/15 via-indigo-900/5 to-transparent blur-3xl pointer-events-none -z-0" />
 
                 {/* Top Nav Bar */}
-                <header className="h-14 px-4 flex items-center justify-between border-b border-white/[0.06] bg-[#0c0c0f]/80 backdrop-blur-xl z-20">
+                <header className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06] bg-white/80 dark:bg-[#0c0c0f]/80 backdrop-blur-xl z-20 transition-colors duration-200">
                     <div className="flex items-center gap-3">
                         {!isSidebarOpen && (
                             <button
                                 onClick={() => setIsSidebarOpen(true)}
-                                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                                className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
                                 title="Expand sidebar"
                             >
                                 <PanelLeft className="w-4 h-4" />
                             </button>
                         )}
                         {activeConv && (
-                            <span className="text-xs font-medium text-neutral-300 truncate max-w-xs sm:max-w-md">
+                            <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-200 truncate max-w-xs sm:max-w-md">
                                 {activeConv.title}
                             </span>
                         )}
                     </div>
 
                     <div className="flex items-center gap-3">
+                        {/* Telegram Theme Switcher Button */}
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2 rounded-xl border border-neutral-200/80 dark:border-white/10 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-all flex items-center gap-1.5 text-xs"
+                            title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}
+                        >
+                            {theme === 'dark' ? (
+                                <>
+                                    <Sun className="w-4 h-4 text-amber-400" />
+                                    <span className="hidden sm:inline">Light</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Moon className="w-4 h-4 text-purple-600" />
+                                    <span className="hidden sm:inline">Dark</span>
+                                </>
+                            )}
+                        </button>
+
                         {user?.role === 'admin' && (
                             <>
                                 <Link
                                     href="/admin"
-                                    className="text-xs text-neutral-400 hover:text-purple-400 flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                                    className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
                                 >
                                     <Shield className="w-3.5 h-3.5" />
                                     <span className="hidden sm:inline">Admin</span>
                                 </Link>
                                 <Link
                                     href="/admin/settings"
-                                    className="text-xs text-neutral-400 hover:text-purple-400 flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                                    className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
                                 >
                                     <Sliders className="w-3.5 h-3.5" />
                                     <span className="hidden sm:inline">Engines</span>
@@ -687,7 +787,7 @@ export default function ChatIndex({
                             href="https://account.dynime.com"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-neutral-400 hover:text-purple-300 flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                            className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-purple-600 dark:hover:text-purple-300 flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
                         >
                             <span>account.dynime.com</span>
                             <ExternalLink className="w-3 h-3" />
@@ -696,7 +796,7 @@ export default function ChatIndex({
                         {!user && (
                             <a
                                 href={ssoLoginUrl}
-                                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-medium shadow-md shadow-purple-600/20 transition-all"
+                                className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-all"
                             >
                                 Log in
                             </a>
@@ -706,31 +806,36 @@ export default function ChatIndex({
 
                 {/* Content Canvas */}
                 {messages.length === 0 ? (
-                    /* KIMI-STYLE HERO CENTER CANVAS WITH SUBTLE GRADIENT TOUCH */
+                    /* KIMI-STYLE HERO CENTER CANVAS (100% IDENTICAL PROPORTIONS) */
                     <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 max-w-3xl mx-auto w-full relative z-10">
-                        {/* Huge Bold Title with Subtle Gradient */}
-                        <div className="text-center mb-8 select-none">
-                            <h1 className="font-heading text-5xl sm:text-6xl font-black tracking-[0.2em] bg-gradient-to-b from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent drop-shadow-sm">
+                        {/* Huge Bold Title with Official Dynime Logo */}
+                        <div className="text-center mb-8 select-none flex flex-col items-center">
+                            <img
+                                src="https://cdn.dynime.com/Dynime%20Logo/LOGO%20PNG/dynime-logo.png"
+                                alt="Dynime"
+                                className="h-14 w-auto object-contain mb-3 drop-shadow-sm transition-transform hover:scale-105 duration-200"
+                            />
+                            <h1 className="font-heading text-4xl sm:text-5xl font-black tracking-[0.25em] text-neutral-900 dark:text-white drop-shadow-sm">
                                 DYNIME
                             </h1>
                         </div>
 
-                        {/* Centered Input Card with subtle glowing border */}
-                        <div className="w-full bg-[#16161b]/95 backdrop-blur-xl border border-white/[0.08] hover:border-purple-500/30 focus-within:border-purple-500/50 focus-within:shadow-[0_0_30px_rgba(139,92,246,0.12)] rounded-2xl p-3.5 shadow-2xl transition-all duration-300">
+                        {/* Centered Input Card */}
+                        <div className="w-full bg-white dark:bg-[#16161b] border border-neutral-200/90 dark:border-white/[0.08] hover:border-purple-500/40 dark:hover:border-purple-500/30 focus-within:border-purple-600 dark:focus-within:border-purple-500/60 focus-within:ring-2 focus-within:ring-purple-500/10 dark:focus-within:ring-0 dark:focus-within:shadow-[0_0_30px_rgba(139,92,246,0.12)] rounded-2xl p-3.5 shadow-lg dark:shadow-2xl transition-all duration-300">
                             {/* Attachments preview */}
                             {attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mb-2 px-1">
                                     {attachments.map((att, index) => (
                                         <div
                                             key={index}
-                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-950/60 border border-purple-800/40 text-[11px] text-purple-300 shadow-sm"
+                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/40 text-[11px] text-purple-700 dark:text-purple-300 shadow-xs"
                                         >
                                             <FileText className="w-3 h-3" />
                                             <span className="max-w-[140px] truncate">{att.name}</span>
                                             <button
                                                 type="button"
                                                 onClick={() => removeAttachment(index)}
-                                                className="hover:text-rose-400 transition-colors"
+                                                className="hover:text-rose-500 transition-colors"
                                             >
                                                 <X className="w-3 h-3" />
                                             </button>
@@ -752,11 +857,11 @@ export default function ChatIndex({
                                 }}
                                 placeholder="Ask anything, or task an agent..."
                                 rows={2}
-                                className="w-full bg-transparent border-none text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-0 resize-none px-2 py-1 leading-relaxed"
+                                className="w-full bg-transparent border-none text-[15px] text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-0 resize-none px-2 py-1 leading-relaxed"
                             />
 
                             {/* Bottom Card Controls */}
-                            <div className="flex items-center justify-between pt-3 px-1 border-t border-white/[0.05]">
+                            <div className="flex items-center justify-between pt-3 px-1 border-t border-neutral-100 dark:border-white/[0.05]">
                                 {/* Attach File */}
                                 <input
                                     ref={fileInputRef}
@@ -768,30 +873,30 @@ export default function ChatIndex({
                                     type="button"
                                     disabled={isUploading || isGenerating}
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40"
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors disabled:opacity-40"
                                     title="Attach document or file"
                                 >
-                                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin text-purple-400" /> : <Plus className="w-4 h-4" />}
+                                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin text-purple-600" /> : <Plus className="w-4 h-4" />}
                                 </button>
 
                                 <div className="flex items-center gap-2">
                                     {/* Capability Selector Dropdown */}
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <button className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 border border-white/[0.08] transition-all">
+                                            <button className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-white/[0.04] hover:bg-neutral-200 dark:hover:bg-white/[0.08] text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-white/[0.08] transition-all">
                                                 <span>{capabilityLabels[selectedCapability] || 'Instant High'}</span>
                                                 <ChevronDown className="w-3 h-3 opacity-60" />
                                             </button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-52 bg-[#191920] border-white/10 text-white shadow-xl">
+                                        <DropdownMenuContent align="end" className="w-52 bg-white dark:bg-[#191920] border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white shadow-xl">
                                             {capabilities.map((cap) => (
                                                 <DropdownMenuItem
                                                     key={cap.id}
                                                     onClick={() => setSelectedCapability(cap.id)}
-                                                    className="text-xs cursor-pointer hover:bg-purple-950/60 flex items-center justify-between py-2"
+                                                    className="text-xs cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/60 flex items-center justify-between py-2"
                                                 >
                                                     <span>{cap.name}</span>
-                                                    <span className="text-[10px] text-purple-400 bg-purple-950/80 px-1.5 py-0.5 rounded border border-purple-800/30">
+                                                    <span className="text-[10px] text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/80 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800/30">
                                                         {cap.badge}
                                                     </span>
                                                 </DropdownMenuItem>
@@ -806,8 +911,8 @@ export default function ChatIndex({
                                         onClick={handleSendMessage}
                                         className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                                             inputValue.trim() && !isGenerating
-                                                ? 'bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-600/30 hover:scale-105 active:scale-95'
-                                                : 'bg-white/[0.06] text-neutral-500 cursor-not-allowed'
+                                                ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/30 hover:scale-105 active:scale-95'
+                                                : 'bg-neutral-200 dark:bg-white/[0.06] text-neutral-400 dark:text-neutral-500 cursor-not-allowed'
                                         }`}
                                     >
                                         {isGenerating ? (
@@ -831,9 +936,9 @@ export default function ChatIndex({
                                             setSelectedCapability(chip.id);
                                             if (textareaRef.current) textareaRef.current.focus();
                                         }}
-                                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/[0.03] hover:bg-white/[0.08] hover:border-purple-500/40 border border-white/[0.07] text-xs font-medium text-neutral-300 hover:text-white transition-all shadow-sm hover:shadow-purple-900/10 group"
+                                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-white/[0.03] hover:bg-neutral-50 dark:hover:bg-white/[0.08] border border-neutral-200/80 dark:border-white/[0.07] hover:border-purple-400 dark:hover:border-purple-500/40 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-all shadow-xs group"
                                     >
-                                        <Icon className="w-3.5 h-3.5 text-neutral-400 group-hover:text-purple-400 transition-colors" />
+                                        <Icon className="w-3.5 h-3.5 text-neutral-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" />
                                         <span>{chip.label}</span>
                                     </button>
                                 );
@@ -841,9 +946,9 @@ export default function ChatIndex({
                         </div>
 
                         {/* Explore Inspiration Bottom Pill (from Screenshot 1) */}
-                        <div className="mt-14 flex items-center justify-between px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.06] text-[11px] text-neutral-400 w-full max-w-sm">
+                        <div className="mt-14 flex items-center justify-between px-4 py-2 rounded-full bg-neutral-100/80 dark:bg-white/[0.03] border border-neutral-200/60 dark:border-white/[0.06] text-[11px] text-neutral-500 dark:text-neutral-400 w-full max-w-sm">
                             <div className="flex items-center gap-2">
-                                <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
                                 <span>Explore inspiration</span>
                             </div>
                             <span className="flex items-center gap-1 text-neutral-400">
@@ -853,86 +958,88 @@ export default function ChatIndex({
                         </div>
                     </div>
                 ) : (
-                    /* ACTIVE CHAT CANVAS */
+                    /* ACTIVE CHAT CANVAS (ELEGANT OPEN FLOW - KIMI STYLE) */
                     <div className="flex-1 flex flex-col min-h-0 relative z-10">
-                        {/* Messages Scroll Area */}
-                        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6 max-w-3xl mx-auto w-full">
+                        {/* Messages Scroll Stream */}
+                        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-7 max-w-3xl mx-auto w-full">
                             {messages.map((msg, index) => {
                                 const isUser = msg.role === 'user';
                                 return (
-                                    <div
-                                        key={msg.id || index}
-                                        className={`flex gap-3.5 ${isUser ? 'ml-auto flex-row-reverse max-w-xl' : 'mr-auto max-w-2xl'}`}
-                                    >
-                                        {/* Avatar */}
-                                        <div
-                                            className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-semibold ${
-                                                isUser
-                                                    ? 'bg-neutral-800 text-neutral-300 border border-white/10'
-                                                    : 'bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-600 text-white shadow-md shadow-purple-600/30'
-                                            }`}
-                                        >
-                                            {isUser ? <UserIcon className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
-                                        </div>
-
-                                        {/* Message Bubble */}
-                                        <div
-                                            className={`rounded-2xl p-4 text-xs transition-all ${
-                                                isUser
-                                                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-tr-sm shadow-md shadow-purple-950/30 text-sm leading-relaxed'
-                                                    : 'bg-[#15151a]/95 border border-white/[0.08] text-neutral-200 rounded-tl-sm shadow-sm backdrop-blur-md'
-                                            }`}
-                                        >
-                                            {isUser ? (
-                                                <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
-                                            ) : (
-                                                formatAssistantMessage(msg.content)
-                                            )}
-
-                                            {!isUser && (
-                                                <div className="flex items-center justify-between gap-4 mt-3.5 pt-2.5 border-t border-white/[0.06] text-[10px] text-neutral-400">
-                                                    <div className="flex items-center gap-2">
-                                                        {msg.provider && (
-                                                            <span className="uppercase tracking-wider font-semibold text-purple-400 bg-purple-950/60 px-1.5 py-0.5 rounded border border-purple-800/30">
-                                                                {msg.provider}
-                                                            </span>
-                                                        )}
-                                                        {msg.latency_ms && <span>• {msg.latency_ms}ms</span>}
+                                    <div key={msg.id || index} className="w-full">
+                                        {isUser ? (
+                                            /* User Message: Elegant Right-Aligned Clean Bubble */
+                                            <div className="flex justify-end">
+                                                <div className="bg-[#f0f1f5] dark:bg-[#1e1e24] text-neutral-900 dark:text-neutral-100 rounded-2xl rounded-tr-md px-4.5 py-3 text-[14.5px] leading-relaxed max-w-xl shadow-xs border border-neutral-200/50 dark:border-white/[0.06] whitespace-pre-wrap font-normal">
+                                                    {msg.content}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            /* Assistant Response: Borderless, Open Typography Flow (Kimi Style) */
+                                            <div className="flex flex-col gap-2.5">
+                                                {/* Header Row with Dynime Logo & Model Badge */}
+                                                <div className="flex items-center gap-2 select-none">
+                                                    <div className="w-6 h-6 rounded-md bg-purple-600 flex items-center justify-center shadow-xs">
+                                                        <Sparkles className="w-3.5 h-3.5 text-white" />
                                                     </div>
+                                                    <span className="font-heading font-semibold text-xs text-neutral-900 dark:text-white">
+                                                        Dynime AI
+                                                    </span>
+                                                    {msg.provider && (
+                                                        <span className="text-[10px] font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-800/40">
+                                                            {msg.provider}
+                                                        </span>
+                                                    )}
+                                                </div>
 
-                                                    <div className="flex items-center gap-1.5">
-                                                        <button
-                                                            onClick={() => handleCopy(msg.content, msg.id)}
-                                                            className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-white/10 text-neutral-400 hover:text-white transition-colors"
-                                                            title="Copy text"
-                                                        >
-                                                            {copiedId === msg.id ? (
-                                                                <>
-                                                                    <Check className="w-3 h-3 text-emerald-400" />
-                                                                    <span className="text-emerald-400">Copied</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Copy className="w-3 h-3" />
-                                                                    <span>Copy</span>
-                                                                </>
+                                                {/* Message Content */}
+                                                <div className="pl-8 pr-2">
+                                                    {formatAssistantMessage(msg.content)}
+
+                                                    {/* Toolbar: Copy, Retry, Latency */}
+                                                    <div className="flex items-center justify-between gap-4 mt-4 pt-2 text-[11px] text-neutral-400 border-t border-neutral-100 dark:border-white/[0.05]">
+                                                        <div className="flex items-center gap-2">
+                                                            {msg.latency_ms && (
+                                                                <span className="flex items-center gap-1 text-neutral-400">
+                                                                    <Zap className="w-3 h-3 text-amber-500" />
+                                                                    <span>{msg.latency_ms}ms</span>
+                                                                </span>
                                                             )}
-                                                        </button>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-1">
+                                                            <button
+                                                                onClick={() => handleCopy(msg.content, msg.id)}
+                                                                className="flex items-center gap-1 px-2.5 py-1 rounded-md hover:bg-neutral-100 dark:hover:bg-white/10 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                                                                title="Copy text"
+                                                            >
+                                                                {copiedId === msg.id ? (
+                                                                    <>
+                                                                        <Check className="w-3 h-3 text-emerald-500" />
+                                                                        <span className="text-emerald-500 font-medium">Copied</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Copy className="w-3 h-3" />
+                                                                        <span>Copy</span>
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
 
                             {isGenerating && (
-                                <div className="flex gap-3 max-w-2xl mr-auto">
-                                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 via-purple-500 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 animate-pulse shadow-md shadow-purple-600/30">
-                                        <Bot className="w-3.5 h-3.5" />
+                                <div className="flex items-center gap-3 pl-1">
+                                    <div className="w-6 h-6 rounded-md bg-purple-600 text-white flex items-center justify-center animate-pulse">
+                                        <Sparkles className="w-3.5 h-3.5" />
                                     </div>
-                                    <div className="rounded-2xl rounded-tl-sm p-4 bg-[#15151a]/95 border border-white/[0.08] text-xs text-neutral-400 flex items-center gap-2.5 backdrop-blur-md">
-                                        <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                                    <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                                        <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
                                         <span>Dynime AI is synthesizing response...</span>
                                     </div>
                                 </div>
@@ -941,19 +1048,19 @@ export default function ChatIndex({
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Bottom Floating Input Box with subtle gradient glow */}
-                        <div className="p-4 border-t border-white/[0.06] bg-gradient-to-t from-[#0c0c0f] via-[#0c0c0f]/95 to-transparent backdrop-blur-xl">
-                            <div className="max-w-3xl mx-auto w-full bg-[#16161b]/95 backdrop-blur-xl border border-white/[0.08] hover:border-purple-500/30 focus-within:border-purple-500/50 focus-within:shadow-[0_0_25px_rgba(139,92,246,0.12)] rounded-2xl p-2.5 shadow-2xl transition-all">
+                        {/* Bottom Floating Input Card (In Active Chat) */}
+                        <div className="p-4 border-t border-neutral-200/80 dark:border-white/[0.06] bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#0c0c0f] dark:via-[#0c0c0f]/95 backdrop-blur-xl">
+                            <div className="max-w-3xl mx-auto w-full bg-white dark:bg-[#16161b] border border-neutral-200/90 dark:border-white/[0.08] hover:border-purple-500/40 dark:hover:border-purple-500/30 focus-within:border-purple-600 dark:focus-within:border-purple-500/60 focus-within:ring-2 focus-within:ring-purple-500/10 dark:focus-within:ring-0 rounded-2xl p-2.5 shadow-lg dark:shadow-2xl transition-all">
                                 {attachments.length > 0 && (
                                     <div className="flex flex-wrap gap-2 mb-2 px-1">
                                         {attachments.map((att, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-950/60 border border-purple-800/40 text-[11px] text-purple-300"
+                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/40 text-[11px] text-purple-700 dark:text-purple-300"
                                             >
                                                 <FileText className="w-3 h-3" />
                                                 <span className="max-w-[120px] truncate">{att.name}</span>
-                                                <button onClick={() => removeAttachment(index)} className="hover:text-rose-400 transition-colors">
+                                                <button onClick={() => removeAttachment(index)} className="hover:text-rose-500 transition-colors">
                                                     <X className="w-3 h-3" />
                                                 </button>
                                             </div>
@@ -972,7 +1079,7 @@ export default function ChatIndex({
                                         type="button"
                                         disabled={isUploading || isGenerating}
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
+                                        className="p-2 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
                                         title="Attach file"
                                     >
                                         <Paperclip className="w-4 h-4" />
@@ -990,23 +1097,23 @@ export default function ChatIndex({
                                         }}
                                         placeholder="Message Dynime AI..."
                                         rows={1}
-                                        className="flex-1 bg-transparent border-none text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none resize-none max-h-32 py-1.5 leading-relaxed"
+                                        className="flex-1 bg-transparent border-none text-[15px] text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none resize-none max-h-32 py-1.5 leading-relaxed"
                                     />
 
                                     <div className="flex items-center gap-2">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <button className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 border border-white/[0.08]">
-                                                    <span>{capabilityLabels[selectedCapability] || 'Instant'}</span>
+                                                <button className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-white/[0.04] hover:bg-neutral-200 dark:hover:bg-white/[0.08] text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-white/[0.08]">
+                                                    <span>{capabilityLabels[selectedCapability] || 'Instant High'}</span>
                                                     <ChevronDown className="w-3 h-3 opacity-60" />
                                                 </button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-52 bg-[#191920] border-white/10 text-white shadow-xl">
+                                            <DropdownMenuContent align="end" className="w-52 bg-white dark:bg-[#191920] border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white shadow-xl">
                                                 {capabilities.map((cap) => (
                                                     <DropdownMenuItem
                                                         key={cap.id}
                                                         onClick={() => setSelectedCapability(cap.id)}
-                                                        className="text-xs cursor-pointer hover:bg-purple-950/60"
+                                                        className="text-xs cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/60"
                                                     >
                                                         {cap.name}
                                                     </DropdownMenuItem>
@@ -1020,8 +1127,8 @@ export default function ChatIndex({
                                             onClick={handleSendMessage}
                                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                                                 inputValue.trim() && !isGenerating
-                                                    ? 'bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/30 hover:scale-105'
-                                                    : 'bg-white/[0.06] text-neutral-500 cursor-not-allowed'
+                                                    ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/30 hover:scale-105'
+                                                    : 'bg-neutral-200 dark:bg-white/[0.06] text-neutral-400 dark:text-neutral-500 cursor-not-allowed'
                                             }`}
                                         >
                                             <ArrowUp className="w-4 h-4" />
