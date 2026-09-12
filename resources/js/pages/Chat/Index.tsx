@@ -68,6 +68,8 @@ import {
     HelpCircle,
     ArrowUpCircle,
     Info,
+    MessageSquare,
+    FolderArchive,
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -387,6 +389,26 @@ export default function ChatIndex({
     const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
     const [userPlan, setUserPlan] = useState<string>(current_plan_slug);
     const isProUser = (userPlan && userPlan.toLowerCase() !== 'free') || (current_plan_slug && current_plan_slug !== 'free');
+
+    // Header notices & modals
+    const [showLimitNotice, setShowLimitNotice] = useState(true);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+
+    // Scroll to specific message or artifact
+    const scrollToItem = (elementId: string) => {
+        setIsLibraryOpen(false);
+        setTimeout(() => {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('ring-2', 'ring-[#635bff]', 'ring-offset-4', 'transition-all', 'duration-500');
+                setTimeout(() => {
+                    el.classList.remove('ring-2', 'ring-[#635bff]', 'ring-offset-4');
+                }, 2500);
+            }
+        }, 120);
+    };
 
     const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
     const [activeConv, setActiveConv] = useState<Conversation | null>(initial_conversation);
@@ -793,6 +815,49 @@ export default function ChatIndex({
 
         return artifacts;
     };
+
+    // Collect all attachments & generated deliverables dynamically for the Library drawer
+    const chatLibraryItems = React.useMemo(() => {
+        const items: Array<{
+            id: string;
+            elementId: string;
+            title: string;
+            type: string;
+            size?: string;
+            source: 'upload' | 'generated';
+            messageId: number;
+        }> = [];
+
+        messages.forEach((msg) => {
+            if (msg.attachments && Array.isArray(msg.attachments)) {
+                msg.attachments.forEach((att: any, idx: number) => {
+                    items.push({
+                        id: "upload-" + msg.id + "-" + idx,
+                        elementId: "msg-" + msg.id,
+                        title: att.name || 'Uploaded Document',
+                        type: att.type || 'file',
+                        size: att.size ? (att.size / 1024).toFixed(0) + " KB" : 'Attachment',
+                        source: 'upload',
+                        messageId: msg.id,
+                    });
+                });
+            }
+            const docs = msg.documents || (msg.role === 'assistant' ? synthesizeArtifacts(msg.content, activeConv?.title) : []);
+            docs.forEach((doc) => {
+                items.push({
+                    id: "art-" + doc.id,
+                    elementId: "artifact-" + doc.id,
+                    title: doc.title,
+                    type: doc.type,
+                    size: doc.size,
+                    source: 'generated',
+                    messageId: msg.id,
+                });
+            });
+        });
+
+        return items;
+    }, [messages, activeConv?.title]);
 
     const handleSendMessage = async (customPrompt?: string) => {
         const text = customPrompt || inputValue;
@@ -1835,9 +1900,9 @@ export default function ChatIndex({
                     previewDoc ? (isPreviewExpanded ? 'hidden' : 'w-full lg:w-1/2 border-r border-neutral-200 dark:border-white/[0.08]') : 'w-full'
                 }`}>
                     {/* Top Nav Bar */}
-                    <header className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06] bg-white/80 dark:bg-[#0c0c0f]/80 backdrop-blur-xl z-20 transition-colors duration-200 flex-shrink-0">
-                        <div className="flex items-center gap-3 min-w-0">
-                            {/* If sidebar is collapsed, display brand icon + toggle button matching Kimi */}
+                    <header className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/50 dark:border-white/[0.04] bg-white/70 dark:bg-[#0c0c0f]/70 backdrop-blur-md z-20 flex-shrink-0">
+                        {/* Left: Sidebar toggle + Active Chat Title Dropdown matching Screenshot 2 */}
+                        <div className="flex items-center gap-2.5 min-w-0">
                             {!isSidebarOpen && (
                                 <div className="flex items-center gap-2 flex-shrink-0">
                                     <div className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200/80 dark:border-white/10 flex items-center justify-center shadow-xs">
@@ -1857,51 +1922,124 @@ export default function ChatIndex({
                                 </div>
                             )}
 
-                            {/* Active Chat Title Dropdown matching Screenshots 2, 3, 4 */}
-                            {activeConv && (
+                            {/* Active Chat Title Dropdown matching Screenshot 2 */}
+                            {activeConv ? (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <button className="flex items-center gap-1.5 text-xs font-semibold text-neutral-800 dark:text-neutral-200 hover:text-neutral-900 dark:hover:text-white truncate max-w-xs sm:max-w-md px-2 py-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors">
+                                        <button className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-100/70 dark:bg-white/[0.05] hover:bg-neutral-200/60 dark:hover:bg-white/[0.08] border border-neutral-200/60 dark:border-white/[0.08] text-xs font-medium text-neutral-800 dark:text-neutral-200 transition-all max-w-[200px] sm:max-w-xs group cursor-pointer">
+                                            <MessageSquare className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-white flex-shrink-0" />
                                             <span className="truncate">{activeConv.title}</span>
-                                            <ChevronDown className="w-3 h-3 text-neutral-400 flex-shrink-0" />
+                                            <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-white flex-shrink-0 ml-0.5" />
                                         </button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" className="w-56 bg-white dark:bg-[#16161b] border border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white shadow-xl rounded-xl p-1 text-xs">
-                                        <DropdownMenuItem onClick={handleNewChat} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/5">
-                                            <Plus className="w-3.5 h-3.5" />
-                                            <span>New discussion</span>
+                                    <DropdownMenuContent
+                                        align="start"
+                                        className="w-56 bg-[#16161a] text-neutral-200 border border-neutral-800 shadow-2xl rounded-xl p-1 text-xs font-sans z-[120]"
+                                    >
+                                        <DropdownMenuItem
+                                            onClick={(e) => handleTogglePin(e, activeConv)}
+                                            className="flex items-center justify-between px-3 py-2 rounded-lg text-neutral-300 hover:text-white hover:bg-white/[0.08] cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <Pin className={`w-4 h-4 ${activeConv.is_pinned ? 'text-amber-400 fill-amber-400' : 'text-neutral-400'}`} />
+                                                <span>{activeConv.is_pinned ? 'Unpin' : 'Pin'}</span>
+                                            </div>
+                                            <kbd className="text-[10px] font-mono text-neutral-500">P</kbd>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={(e) => handleStartRename(e, activeConv)} className="flex items-center gap-2 py-1.5 px-2.5 rounded-lg cursor-pointer hover:bg-neutral-100 dark:hover:bg-white/5">
-                                            <Edit3 className="w-3.5 h-3.5" />
-                                            <span>Rename discussion</span>
+                                        <DropdownMenuItem
+                                            onClick={(e) => handleStartRename(e, activeConv)}
+                                            className="flex items-center justify-between px-3 py-2 rounded-lg text-neutral-300 hover:text-white hover:bg-white/[0.08] cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <Edit3 className="w-4 h-4 text-neutral-400" />
+                                                <span>Rename</span>
+                                            </div>
+                                            <kbd className="text-[10px] font-mono text-neutral-500">R</kbd>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() => toast.info('Discussion added to project workspace.')}
+                                            className="flex items-center justify-between px-3 py-2 rounded-lg text-neutral-300 hover:text-white hover:bg-white/[0.08] cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <FolderPlus className="w-4 h-4 text-neutral-400" />
+                                                <span>Add to project</span>
+                                            </div>
+                                            <ChevronRight className="w-3.5 h-3.5 text-neutral-500" />
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() => setIsShareModalOpen(true)}
+                                            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-neutral-300 hover:text-white hover:bg-white/[0.08] cursor-pointer"
+                                        >
+                                            <Share2 className="w-4 h-4 text-neutral-400" />
+                                            <span>Share chat</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator className="my-1 border-neutral-800" />
+                                        <DropdownMenuItem
+                                            onClick={(e) => handleDeleteConversation(e, activeConv)}
+                                            className="flex items-center justify-between px-3 py-2 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <Trash2 className="w-4 h-4 text-rose-400" />
+                                                <span>Delete</span>
+                                            </div>
+                                            <kbd className="text-[10px] font-mono text-rose-400/60">D</kbd>
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                            ) : (
+                                <button onClick={handleNewChat} className="flex items-center gap-1.5 text-xs font-semibold text-neutral-800 dark:text-neutral-200 px-2 py-1 rounded-lg">
+                                    <MessageSquare className="w-3.5 h-3.5 text-neutral-400" />
+                                    <span>New Discussion</span>
+                                </button>
                             )}
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            {/* Share & Attachments count matching Screenshots 2, 3, 4 */}
-                            {activeConv && (
-                                <>
-                                    <button
-                                        onClick={() => handleShare(window.location.href)}
-                                        className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
-                                        title="Share chat"
-                                    >
-                                        <Share2 className="w-4 h-4" />
-                                    </button>
-                                    <div className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400 px-2 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 border border-neutral-200/60 dark:border-white/[0.05]">
-                                        <Paperclip className="w-3.5 h-3.5" />
-                                        <span>2</span>
-                                    </div>
-                                </>
-                            )}
+                        {/* Middle: Small plan limit notice card matching requirement 3 */}
+                        {showLimitNotice && (
+                            <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 dark:bg-white/[0.06] border border-neutral-200/80 dark:border-white/10 text-xs text-neutral-600 dark:text-neutral-300 shadow-2xs animate-in fade-in">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                <span className="text-[11.5px]">Daily token status: <strong className="text-neutral-900 dark:text-white font-medium">85% used</strong></span>
+                                <button
+                                    onClick={() => setIsPricingModalOpen(true)}
+                                    className="px-2 py-0.5 rounded-md bg-[#635bff] hover:bg-[#5465ff] text-white text-[10.5px] font-medium transition-colors cursor-pointer"
+                                >
+                                    Upgrade Plan
+                                </button>
+                                <button
+                                    onClick={() => setShowLimitNotice(false)}
+                                    className="p-0.5 rounded-full hover:bg-neutral-200 dark:hover:bg-white/10 text-neutral-400 hover:text-neutral-700 dark:hover:text-white transition-colors cursor-pointer"
+                                    title="Dismiss notice"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </div>
+                        )}
 
-                            {/* Telegram Theme Switcher Button */}
+                        {/* Right: Share Chat, Dynamic Library, Theme Toggle, Admin & Profile */}
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                            {/* Share chat button with social preview modal */}
+                            <button
+                                onClick={() => setIsShareModalOpen(true)}
+                                className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                                title="Share chat"
+                            >
+                                <Share2 className="w-4 h-4" />
+                            </button>
+
+                            {/* Dynamic Library button with counter badge */}
+                            <button
+                                onClick={() => setIsLibraryOpen(true)}
+                                className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200/70 dark:hover:bg-white/[0.08] border border-neutral-200/60 dark:border-white/[0.05] transition-colors cursor-pointer"
+                                title="Chat Library: Files & Deliverables"
+                            >
+                                <FolderArchive className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff]" />
+                                <span className="font-semibold">{chatLibraryItems.length}</span>
+                            </button>
+
+                            {/* Theme Switcher Button */}
                             <button
                                 onClick={toggleTheme}
-                                className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
+                                className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
                                 title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}
                             >
                                 {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#635bff]" />}
@@ -1922,18 +2060,24 @@ export default function ChatIndex({
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <button
-                                            className="relative flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-[#635bff]/40 focus:outline-none transition-all group"
-                                            title={`${user.name} (Dynime Account)`}
+                                            className="relative flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-[#635bff]/40 focus:outline-none transition-all group cursor-pointer"
+                                            title={(user.name || "User") + " (Dynime Account)"}
                                         >
                                             <img
-                                                src={avatarSrc || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7c3aed&color=fff`}
-                                                alt={user.name}
+                                                src={avatarSrc || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.name || 'User') + "&background=7c3aed&color=fff"}
+                                                alt={user.name || 'User'}
                                                 className="w-7 h-7 rounded-full object-cover border border-neutral-200 dark:border-white/20 shadow-xs group-hover:scale-105 transition-transform"
                                             />
-                                            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0c0c0f]" />
+                                            {isProUser ? (
+                                                <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[7.5px] font-bold bg-gradient-to-r from-amber-500 to-[#635bff] text-white border border-white dark:border-[#0c0c0f] shadow-xs">
+                                                    PRO
+                                                </span>
+                                            ) : (
+                                                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0c0c0f]" />
+                                            )}
                                         </button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-60 bg-white dark:bg-[#16161b] border border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white shadow-2xl rounded-2xl p-1.5">
+                                    <DropdownMenuContent align="end" className="w-64 bg-white dark:bg-[#16161b] border border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white shadow-2xl rounded-2xl p-1.5 font-sans z-[120]">
                                         <div className="px-3 py-2.5 border-b border-neutral-100 dark:border-white/5">
                                             <p className="text-xs font-bold text-neutral-900 dark:text-white truncate">{user.name}</p>
                                             <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">{user.email}</p>
@@ -1952,19 +2096,22 @@ export default function ChatIndex({
                                                 <ExternalLink className="w-3 h-3 text-neutral-400" />
                                             </a>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <a
-                                                href="https://account.dynime.com/security"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center justify-between text-xs py-2 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-600 dark:text-neutral-300"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <Shield className="w-4 h-4 text-neutral-400" />
-                                                    <span>Security & Login</span>
-                                                </div>
-                                                <ExternalLink className="w-3 h-3 text-neutral-400" />
-                                            </a>
+                                        <DropdownMenuItem
+                                            onClick={() => setIsPricingModalOpen(true)}
+                                            className="flex items-center justify-between text-xs py-2 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-700 dark:text-neutral-200"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <ArrowUpCircle className="w-4 h-4 text-[#635bff]" />
+                                                <span>Upgrade Plan</span>
+                                            </div>
+                                            <span className="text-[10px] text-[#635bff] font-semibold bg-[#635bff]/15 px-1.5 py-0.2 rounded">Plans</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() => setIsAppsModalOpen(true)}
+                                            className="flex items-center gap-2 text-xs py-2 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-700 dark:text-neutral-200"
+                                        >
+                                            <Download className="w-4 h-4 text-neutral-400" />
+                                            <span>Get Apps & Extensions</span>
                                         </DropdownMenuItem>
                                         <div className="my-1 border-t border-neutral-100 dark:border-white/5" />
                                         <DropdownMenuItem
@@ -1979,9 +2126,9 @@ export default function ChatIndex({
                             ) : (
                                 <a
                                     href={ssoLoginUrl}
-                                    className="px-3 py-1.5 rounded-lg bg-[#635bff] hover:bg-[#5465ff] text-white text-xs font-semibold shadow-xs transition-all"
+                                    className="px-3 py-1.5 rounded-lg bg-[#635bff] hover:bg-[#5465ff] text-white text-xs font-semibold transition-all shadow-xs"
                                 >
-                                    Log in
+                                    Sign In
                                 </a>
                             )}
                         </div>
@@ -2341,6 +2488,7 @@ export default function ChatIndex({
                                                     )}
 
                                                     {/* User Bubble matching Screenshot 2 */}
+                                                    <div id={"msg-" + msg.id} className="scroll-mt-20" />
                                                     <div className="bg-[#f0f1f5] dark:bg-[#232328] text-neutral-900 dark:text-neutral-100 rounded-2xl px-5 py-3 text-[14.5px] leading-relaxed max-w-xl shadow-xs border border-neutral-200/60 dark:border-white/[0.06] whitespace-pre-wrap font-normal break-words">
                                                         {msg.content}
                                                     </div>
@@ -2381,9 +2529,7 @@ export default function ChatIndex({
                                                         >
                                                             <div className="flex items-center gap-2.5 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
                                                                 {/* Blue round AI icon badge matching Screenshot 2 */}
-                                                                <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-white">
-                                                                    <Bot className="w-3 h-3" />
-                                                                </div>
+                                                                <Bot className="w-4 h-4 text-[#635bff] dark:text-[#788bff] flex-shrink-0" />
                                                                 <span>Used 23 tools, Business Management Report Chapter Outline and Structure</span>
                                                                 <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform ${isToolsTimelineOpen ? 'rotate-180' : ''}`} />
                                                             </div>
@@ -2419,6 +2565,7 @@ export default function ChatIndex({
                                                             return (
                                                                 <div
                                                                     key={doc.id}
+                                                                    id={"artifact-" + doc.id}
                                                                     onClick={() => openPreview(doc)}
                                                                     className="group flex items-center justify-between p-3.5 rounded-xl border border-neutral-200/90 dark:border-white/[0.08] bg-white dark:bg-[#16161b] hover:border-[#635bff]/40 dark:hover:border-[#635bff]/30 shadow-sm cursor-pointer transition-all duration-200"
                                                                 >
@@ -2522,14 +2669,9 @@ export default function ChatIndex({
                                 })}
 
                                 {isGenerating && (
-                                    <div className="flex items-center gap-3 pl-1">
-                                        <div className="w-6 h-6 rounded-md bg-[#635bff] text-white flex items-center justify-center animate-pulse">
-                                            <Sparkles className="w-3.5 h-3.5" />
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                                            <Loader2 className="w-4 h-4 animate-spin text-[#635bff]" />
-                                            <span>Dynime AI is synthesizing response...</span>
-                                        </div>
+                                    <div className="flex items-center gap-2.5 pl-1 py-1 text-xs text-neutral-500 dark:text-neutral-400">
+                                        <Sparkles className="w-4 h-4 text-[#635bff] dark:text-[#788bff] animate-spin flex-shrink-0" />
+                                        <span className="font-medium">Dynime AI is synthesizing response...</span>
                                     </div>
                                 )}
 
@@ -2537,7 +2679,7 @@ export default function ChatIndex({
                             </div>
 
                             {/* Pinned Bottom Floating Input Bar matching Screenshots 2, 3, 4 */}
-                            <div className="px-4 pt-2 pb-2.5 border-t border-neutral-200/80 dark:border-white/[0.06] bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#0c0c0f] dark:via-[#0c0c0f]/95 backdrop-blur-xl flex-shrink-0">
+                            <div className="px-4 pb-3 pt-1 bg-transparent flex-shrink-0">
                                 <div className="max-w-3xl mx-auto w-full space-y-1.5">
                                     <div className="w-full bg-white dark:bg-[#18181c] border border-neutral-200/90 dark:border-white/[0.08] hover:border-[#635bff]/40 focus-within:border-[#635bff] dark:focus-within:border-[#635bff]/60 rounded-xl px-3 py-1.5 sm:py-2 shadow-xs transition-all">
                                     {attachments.length > 0 && (
@@ -3519,6 +3661,193 @@ export default function ChatIndex({
                 </div>
             )}
 
+
+            {/* SHARE CHAT MODAL WITH SOCIAL PREVIEW */}
+            {isShareModalOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-[#15151a] border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden text-neutral-900 dark:text-neutral-100 animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 rounded-lg bg-[#635bff]/10 text-[#635bff] dark:text-[#9bb1ff]">
+                                    <Share2 className="w-4 h-4" />
+                                </div>
+                                <h3 className="font-semibold text-sm">Share Public Discussion</h3>
+                            </div>
+                            <button
+                                onClick={() => setIsShareModalOpen(false)}
+                                className="p-1 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4 text-xs">
+                            <p className="text-neutral-500 dark:text-neutral-400">
+                                Anyone with this link will be able to view this conversation and its synthesized artifacts.
+                            </p>
+
+                            {/* Social Preview Card matching requirements */}
+                            <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-4 space-y-2 shadow-2xs">
+                                <div className="flex items-center justify-between text-[11px] text-neutral-400">
+                                    <div className="flex items-center gap-1.5">
+                                        <img src="https://cdn.dynime.com/Dynime%20Logo/LOGO%20PNG/dynime-logo.png" className="w-3.5 h-3.5 object-contain" alt="Dynime" />
+                                        <span className="font-medium text-neutral-700 dark:text-neutral-300">ai.dynime.com</span>
+                                    </div>
+                                    <span className="text-[10px] bg-[#635bff]/15 text-[#635bff] dark:text-[#9bb1ff] px-2 py-0.5 rounded-full font-mono">
+                                        {selectedModel || 'DComposer'}
+                                    </span>
+                                </div>
+
+                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-white line-clamp-2">
+                                    {activeConv?.title || 'Dynime AI Discussion'}
+                                </h4>
+
+                                <p className="text-neutral-500 dark:text-neutral-400 text-[11.5px] line-clamp-3 leading-relaxed">
+                                    {messages[0]?.content
+                                        ? messages[0].content.slice(0, 140) + '...'
+                                        : 'Shared discussion analyzing strategic synthesis, executive models, and structured intelligence.'}
+                                </p>
+
+                                <div className="pt-2 border-t border-neutral-200/60 dark:border-white/5 flex items-center justify-between text-[10.5px] text-neutral-400">
+                                    <span>{messages.length} messages shared</span>
+                                    <span>Dynime Cloud Gateway</span>
+                                </div>
+                            </div>
+
+                            {/* Copy Link Input */}
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={typeof window !== 'undefined' ? `${window.location.origin}/chat?c=${activeConv?.uuid || ''}` : ''}
+                                    className="flex-1 px-3 py-2 rounded-xl bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-neutral-800 text-xs font-mono text-neutral-700 dark:text-neutral-300 select-all"
+                                />
+                                <button
+                                    onClick={() => {
+                                        const url = `${window.location.origin}/chat?c=${activeConv?.uuid || ''}`;
+                                        navigator.clipboard?.writeText(url);
+                                        toast.success('Public link copied to clipboard!');
+                                    }}
+                                    className="px-4 py-2 rounded-xl bg-[#635bff] hover:bg-[#5465ff] text-white font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                                >
+                                    <Copy className="w-3.5 h-3.5" />
+                                    <span>Copy</span>
+                                </button>
+                            </div>
+
+                            {/* Quick Social Share Buttons */}
+                            <div className="pt-2 flex items-center justify-between">
+                                <span className="text-neutral-500 text-[11px]">Share directly to:</span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => {
+                                            const url = encodeURIComponent(`${window.location.origin}/chat?c=${activeConv?.uuid || ''}`);
+                                            const text = encodeURIComponent(`Check out this AI discussion on Dynime: ${activeConv?.title || ''}`);
+                                            window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+                                        }}
+                                        className="px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-[11px] font-medium cursor-pointer"
+                                    >
+                                        X (Twitter)
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const url = encodeURIComponent(`${window.location.origin}/chat?c=${activeConv?.uuid || ''}`);
+                                            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
+                                        }}
+                                        className="px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-[11px] font-medium cursor-pointer"
+                                    >
+                                        LinkedIn
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const url = encodeURIComponent(`${window.location.origin}/chat?c=${activeConv?.uuid || ''}`);
+                                            const text = encodeURIComponent(`Check out this Dynime AI discussion: ${activeConv?.title || ''} - ${url}`);
+                                            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+                                        }}
+                                        className="px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-[11px] font-medium cursor-pointer"
+                                    >
+                                        WhatsApp
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* DYNAMIC CHAT LIBRARY DRAWER */}
+            {isLibraryOpen && (
+                <div className="fixed inset-y-0 right-0 z-[140] w-80 sm:w-96 bg-white dark:bg-[#141418] border-l border-neutral-200 dark:border-white/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200 text-neutral-900 dark:text-white font-sans">
+                    <div className="h-14 px-4 border-b border-neutral-200 dark:border-white/10 flex items-center justify-between flex-shrink-0">
+                        <div className="flex items-center gap-2">
+                            <FolderArchive className="w-4 h-4 text-[#635bff] dark:text-[#788bff]" />
+                            <h3 className="font-semibold text-sm">Chat Library</h3>
+                            <span className="px-2 py-0.5 rounded-full text-[10.5px] bg-[#635bff]/15 text-[#635bff] dark:text-[#9bb1ff] font-medium">
+                                {chatLibraryItems.length}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setIsLibraryOpen(false)}
+                            className="p-1 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <div className="p-3 border-b border-neutral-100 dark:border-white/5 bg-neutral-50/50 dark:bg-black/20 text-[11px] text-neutral-500 dark:text-neutral-400">
+                        Click any file or deliverable below to instantly jump to its exact location in the discussion.
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-3 space-y-2 select-none">
+                        {chatLibraryItems.length === 0 ? (
+                            <div className="py-16 text-center text-xs text-neutral-400 space-y-2">
+                                <FolderArchive className="w-8 h-8 mx-auto opacity-40 text-neutral-400" />
+                                <p>No uploaded files or generated artifacts in this discussion yet.</p>
+                            </div>
+                        ) : (
+                            chatLibraryItems.map((item) => (
+                                <div
+                                    key={item.id}
+                                    onClick={() => scrollToItem(item.elementId)}
+                                    className="group flex items-center justify-between p-3 rounded-xl border border-neutral-200/80 dark:border-white/5 bg-neutral-50/70 dark:bg-[#18181f] hover:border-[#635bff]/50 hover:bg-[#635bff]/5 transition-all cursor-pointer shadow-2xs"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded-lg bg-neutral-200/60 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300 flex-shrink-0 group-hover:scale-105 transition-transform">
+                                            {item.type === 'excel' ? (
+                                                <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+                                            ) : item.type === 'presentation' ? (
+                                                <Presentation className="w-4 h-4 text-amber-500" />
+                                            ) : item.type === 'json' || item.type === 'code' ? (
+                                                <FileCode className="w-4 h-4 text-blue-500" />
+                                            ) : item.source === 'upload' ? (
+                                                <Paperclip className="w-4 h-4 text-indigo-400" />
+                                            ) : (
+                                                <FileText className="w-4 h-4 text-[#635bff]" />
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-semibold truncate group-hover:text-[#635bff] dark:group-hover:text-[#9bb1ff] transition-colors">
+                                                {item.title}
+                                            </p>
+                                            <p className="text-[10px] text-neutral-400 flex items-center gap-1.5 mt-0.5">
+                                                <span className="capitalize">{item.source === 'upload' ? 'User Upload' : 'AI Generated'}</span>
+                                                <span>·</span>
+                                                <span>{item.size || item.type}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 pl-2">
+                                        <span className="text-[10.5px] text-[#635bff] dark:text-[#9bb1ff] font-medium flex items-center gap-0.5">
+                                            Jump <ArrowUpRight className="w-3 h-3" />
+                                        </span>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
             </div>
         </div>
     );
