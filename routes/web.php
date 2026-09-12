@@ -29,6 +29,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/conversations/{uuid}', [ChatController::class, 'showConversation'])->name('chat.conversations.show');
     Route::put('/api/conversations/{uuid}', [ChatController::class, 'updateConversation'])->name('chat.conversations.update');
     Route::delete('/api/conversations/{uuid}', [ChatController::class, 'destroyConversation'])->name('chat.conversations.destroy');
+
+    // Project Management Actions
+    Route::get('/api/projects', [ChatController::class, 'getProjects'])->name('chat.projects');
+    Route::post('/api/projects', [ChatController::class, 'storeProject'])->name('chat.projects.store');
+    Route::post('/api/projects/{uuid}/toggle', [ChatController::class, 'toggleProjectCollapse'])->name('chat.projects.toggle');
+    Route::delete('/api/projects/{uuid}', [ChatController::class, 'destroyProject'])->name('chat.projects.destroy');
+    Route::post('/api/conversations/{uuid}/project', [ChatController::class, 'moveConversationToProject'])->name('chat.conversations.moveProject');
     
     Route::post('/api/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
     Route::get('/api/chat/stream', [ChatController::class, 'stream'])->name('chat.stream');

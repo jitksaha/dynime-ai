@@ -14,6 +14,7 @@ class AiConversation extends Model
     protected $fillable = [
         'uuid',
         'user_id',
+        'project_id',
         'title',
         'provider',
         'model',
@@ -35,6 +36,11 @@ class AiConversation extends Model
                 $conversation->uuid = (string) Str::uuid();
             }
         });
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(AiProject::class, 'project_id');
     }
 
     public function user(): BelongsTo

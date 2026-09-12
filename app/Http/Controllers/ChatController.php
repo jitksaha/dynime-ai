@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\AiConversation;
+use App\Models\AiProject;
 use App\Models\AiMessage;
 use App\Models\AiAttachment;
 use App\Models\AiSetting;
@@ -24,7 +25,7 @@ class ChatController extends Controller
             ->orderBy('is_pinned', 'desc')
             ->orderBy('updated_at', 'desc')
             ->take(50)
-            ->get(['id', 'uuid', 'title', 'capability_profile', 'is_pinned', 'updated_at']);
+            ->get(['id', 'uuid', 'project_id', 'title', 'capability_profile', 'is_pinned', 'updated_at']);
 
         $activeConv = null;
         $targetUuid = $uuid ?: $request->query('c');
@@ -242,8 +243,38 @@ class ChatController extends Controller
         $plans = class_exists(AiPlan::class) ? AiPlan::active()->get() : [];
         $dynamicSuggestions = $this->generateInspirationsForUser($user, $conversations);
 
+        // Ensure default 2 projects exist if none created yet
+        if (class_exists(AiProject::class)) {
+            $projectCount = AiProject::where('user_id', $user->id)->count();
+            if ($projectCount === 0) {
+                AiProject::create([
+                    'uuid' => (string) Str::uuid(),
+                    'user_id' => $user->id,
+                    'name' => 'General Workspace',
+                    'color' => '#635bff',
+                    'icon' => 'Folder',
+                    'is_collapsed' => false,
+                ]);
+                AiProject::create([
+                    'uuid' => (string) Str::uuid(),
+                    'user_id' => $user->id,
+                    'name' => 'Strategic Operations',
+                    'color' => '#5465ff',
+                    'icon' => 'Briefcase',
+                    'is_collapsed' => false,
+                ]);
+            }
+            $projects = AiProject::with(['conversations:id,uuid,project_id,title,updated_at'])
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'asc')
+                ->get();
+        } else {
+            $projects = [];
+        }
+
         return Inertia::render('Chat/Index', [
             'conversations' => $conversations,
+            'projects' => $projects,
             'initial_conversation' => $activeConv,
             'active_providers' => $activeProviders,
             'available_models' => $availableModels,
@@ -264,7 +295,7 @@ class ChatController extends Controller
             ->orderBy('is_pinned', 'desc')
             ->orderBy('updated_at', 'desc')
             ->take(50)
-            ->get(['id', 'uuid', 'title', 'capability_profile', 'is_pinned', 'updated_at']);
+            ->get(['id', 'uuid', 'project_id', 'title', 'capability_profile', 'is_pinned', 'updated_at']);
 
         return response()->json($conversations);
     }
@@ -273,9 +304,18 @@ class ChatController extends Controller
     {
         $user = Auth::user();
 
+        $projectId = null;
+        if ($request->has('project_uuid')) {
+            $proj = AiProject::where('user_id', $user->id)->where('uuid', $request->input('project_uuid'))->first();
+            if ($proj) {
+                $projectId = $proj->id;
+            }
+        }
+
         $conv = AiConversation::create([
             'uuid' => (string) Str::uuid(),
             'user_id' => $user->id,
+            'project_id' => $projectId,
             'title' => $request->input('title', 'New Discussion'),
             'capability_profile' => $request->input('capability', 'auto'),
         ]);
@@ -678,4 +718,72 @@ class ChatController extends Controller
 
         return array_merge($dynamicSuggestions, $demoPool);
     }
+
+    public function getProjects()
+    {
+        $user = Auth::user();
+        $projects = AiProject::with(['conversations:id,uuid,project_id,title,updated_at'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+        return response()->json($projects);
+    }
+
+    public function storeProject(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'name' => 'required|string|max:128',
+        ]);
+
+        $project = AiProject::create([
+            'uuid' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'name' => trim($request->input('name')),
+            'color' => $request->input('color', '#635bff'),
+            'icon' => $request->input('icon', 'Folder'),
+            'is_collapsed' => false,
+        ]);
+
+        $project->load(['conversations:id,uuid,project_id,title,updated_at']);
+        return response()->json($project, 201);
+    }
+
+    public function toggleProjectCollapse(Request $request, $uuid)
+    {
+        $user = Auth::user();
+        $project = AiProject::where('user_id', $user->id)->where('uuid', $uuid)->firstOrFail();
+        $project->is_collapsed = !$project->is_collapsed;
+        $project->save();
+
+        return response()->json(['success' => true, 'is_collapsed' => $project->is_collapsed]);
+    }
+
+    public function destroyProject($uuid)
+    {
+        $user = Auth::user();
+        $project = AiProject::where('user_id', $user->id)->where('uuid', $uuid)->firstOrFail();
+        AiConversation::where('project_id', $project->id)->update(['project_id' => null]);
+        $project->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function moveConversationToProject(Request $request, $uuid)
+    {
+        $user = Auth::user();
+        $conv = AiConversation::where('user_id', $user->id)->where('uuid', $uuid)->firstOrFail();
+
+        $projectUuid = $request->input('project_uuid');
+        if ($projectUuid) {
+            $project = AiProject::where('user_id', $user->id)->where('uuid', $projectUuid)->firstOrFail();
+            $conv->project_id = $project->id;
+        } else {
+            $conv->project_id = null;
+        }
+
+        $conv->save();
+        return response()->json(['success' => true, 'project_id' => $conv->project_id]);
+    }
+
 }
