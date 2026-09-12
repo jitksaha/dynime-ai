@@ -240,6 +240,7 @@ class ChatController extends Controller
         ];
 
         $plans = class_exists(AiPlan::class) ? AiPlan::active()->get() : [];
+        $dynamicSuggestions = $this->generateInspirationsForUser($user, $conversations);
 
         return Inertia::render('Chat/Index', [
             'conversations' => $conversations,
@@ -252,6 +253,7 @@ class ChatController extends Controller
             'plugins' => $plugins,
             'current_plan_slug' => $user->current_plan_slug ?? 'free',
             'plans' => $plans,
+            'dynamic_suggestions' => $dynamicSuggestions,
         ]);
     }
 
@@ -441,5 +443,239 @@ class ChatController extends Controller
             'url' => asset('storage/' . $path),
             'text' => $extractedText,
         ]);
+    }
+
+    public function getInspirations(Request $request)
+    {
+        $user = Auth::user();
+        $conversations = AiConversation::where('user_id', $user->id)
+            ->orderBy('updated_at', 'desc')
+            ->take(10)
+            ->get(['id', 'uuid', 'title', 'capability_profile', 'updated_at']);
+
+        $suggestions = $this->generateInspirationsForUser($user, $conversations);
+
+        return response()->json([
+            'success' => true,
+            'inspirations' => $suggestions,
+        ]);
+    }
+
+    protected function generateInspirationsForUser($user, $conversations)
+    {
+        $demoPool = [
+            [
+                'id' => 'demo-1',
+                'title' => 'Gargantua Deep Physics Model',
+                'subtitle' => 'Relativistic raymarching & event horizon fluid mechanics simulation',
+                'tag' => 'Physics / Numerical',
+                'category' => 'science',
+                'previewGradient' => 'from-[#635bff]/15 via-blue-950/20 to-purple-950/20',
+                'prompt' => 'Generate a comprehensive technical report for relativistic raymarching around a rotating Kerr black hole with accretion disk dynamics. Include academic specification tables and generate full documentation.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Core Physics',
+            ],
+            [
+                'id' => 'demo-2',
+                'title' => 'Open SEA Fluid Dynamics',
+                'subtitle' => 'Navier-Stokes fluid solver & marine velocity vector flow analysis',
+                'tag' => 'Hydrology / CFD',
+                'category' => 'engineering',
+                'previewGradient' => 'from-cyan-900/15 via-blue-900/15 to-[#635bff]/15',
+                'prompt' => 'Formulate an end-to-end technical proposal for real-time 3D ocean wave height prediction using 2D shallow water equations and Navier-Stokes approximations. Generate full project documentation.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Simulation',
+            ],
+            [
+                'id' => 'demo-3',
+                'title' => 'Global Market Equity Flow',
+                'subtitle' => 'Cross-asset liquidity clustering & factor risk portfolio breakdown',
+                'tag' => 'Quantitative Finance',
+                'category' => 'finance',
+                'previewGradient' => 'from-emerald-900/15 via-teal-900/15 to-slate-900/20',
+                'prompt' => 'Prepare an institutional investment memorandum analyzing global macroeconomic liquidity flow across equities, sovereign debt, and commodities. Generate executive documentation and financial tables.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Markets',
+            ],
+            [
+                'id' => 'demo-4',
+                'title' => 'Autonomous Multi-Agent Swarm',
+                'subtitle' => 'Hierarchical ReAct protocols & distributed tool consensus orchestration',
+                'tag' => 'Agentic AI',
+                'category' => 'ai',
+                'previewGradient' => 'from-violet-900/15 via-[#635bff]/20 to-indigo-900/15',
+                'prompt' => 'Architect an autonomous multi-agent swarm system for complex data retrieval and verification using ReAct planning, tool-calling validation, and consensus synthesis. Outline step-by-step design.',
+                'isDynamic' => false,
+                'sourceLabel' => 'AI Swarm',
+            ],
+            [
+                'id' => 'demo-5',
+                'title' => 'Distributed Event Sourcing & CQRS',
+                'subtitle' => 'High-throughput Kafka event streaming & eventual consistency mesh',
+                'tag' => 'Cloud Systems',
+                'category' => 'cloud',
+                'previewGradient' => 'from-blue-900/15 via-indigo-900/15 to-neutral-900/20',
+                'prompt' => 'Draft a high-level system design document for an event-sourced distributed ordering system utilizing Apache Kafka, PostgreSQL write models, and Redis read-replica projections.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Architecture',
+            ],
+            [
+                'id' => 'demo-6',
+                'title' => 'Private Equity LBO & Waterfall Model',
+                'subtitle' => 'Three-statement consolidation with debt amortization & hurdle rates',
+                'tag' => 'Investment Banking',
+                'category' => 'finance',
+                'previewGradient' => 'from-amber-900/15 via-emerald-900/15 to-neutral-900/20',
+                'prompt' => 'Build an institutional leveraged buyout (LBO) financial model with senior and mezzanine debt tranches, revolving credit facilities, and return sensitivity tables (MoIC and IRR).',
+                'isDynamic' => false,
+                'sourceLabel' => 'Financial Model',
+            ],
+            [
+                'id' => 'demo-7',
+                'title' => 'Multi-Tenant SaaS RBAC Engine',
+                'subtitle' => 'Tenant database isolation, JWT SSO & dynamic permission trees',
+                'tag' => 'Fullstack Engineering',
+                'category' => 'code',
+                'previewGradient' => 'from-[#5465ff]/15 via-indigo-900/15 to-slate-900/20',
+                'prompt' => 'Design an enterprise-grade multi-tenant authorization framework with hierarchical RBAC, dynamic organization switching, and cryptographic token verification.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Fullstack',
+            ],
+            [
+                'id' => 'demo-8',
+                'title' => 'Zero-Trust Cloud Security Audit',
+                'subtitle' => 'Automated CVE dependency scans, IAM least-privilege & TLS policies',
+                'tag' => 'Cybersecurity',
+                'category' => 'security',
+                'previewGradient' => 'from-rose-900/15 via-purple-900/15 to-neutral-900/20',
+                'prompt' => 'Generate an enterprise zero-trust security architecture posture review covering AWS IAM policies, mTLS between microservices, secrets rotation, and automated audit logging.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Infra Security',
+            ],
+            [
+                'id' => 'demo-9',
+                'title' => 'SaaS Unit Economics & Cohort Retention',
+                'subtitle' => 'LTV/CAC sensitivity matrix, payback velocity & Net Revenue Retention',
+                'tag' => 'Product Analytics',
+                'category' => 'product',
+                'previewGradient' => 'from-teal-900/15 via-cyan-900/15 to-neutral-900/20',
+                'prompt' => 'Formulate a venture-grade financial model analyzing SaaS cohort churn, Net Revenue Retention (NRR), and customer acquisition cost (CAC) payback periods with charts and projections.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Growth',
+            ],
+            [
+                'id' => 'demo-10',
+                'title' => 'CRISPR Target Sequence Scoring',
+                'subtitle' => 'Off-target cleavage prediction & guide RNA kinetic binding efficiency',
+                'tag' => 'Bioinformatics',
+                'category' => 'science',
+                'previewGradient' => 'from-green-900/15 via-emerald-900/15 to-neutral-900/20',
+                'prompt' => 'Provide a detailed computational biology methodology for scoring CRISPR-Cas9 single guide RNA (sgRNA) on-target efficiency and off-target cleavage probability using machine learning.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Bio Research',
+            ],
+            [
+                'id' => 'demo-11',
+                'title' => 'EU AI Act Regulatory Governance',
+                'subtitle' => 'High-risk AI classification, technical documentation & audit trail readiness',
+                'tag' => 'Legal & Compliance',
+                'category' => 'legal',
+                'previewGradient' => 'from-yellow-900/15 via-amber-900/15 to-neutral-900/20',
+                'prompt' => 'Draft an executive compliance readiness checklist for deploying generative AI models under the European Union AI Act, focusing on risk categorization and explainability logs.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Governance',
+            ],
+            [
+                'id' => 'demo-12',
+                'title' => 'Transformer FlashAttention-3 Profiler',
+                'subtitle' => 'GPU SRAM memory hierarchy optimization & FP8 inference latency analysis',
+                'tag' => 'Deep Learning',
+                'category' => 'ai',
+                'previewGradient' => 'from-fuchsia-900/15 via-purple-900/15 to-neutral-900/20',
+                'prompt' => 'Conduct an in-depth hardware latency analysis of FlashAttention-3 kernels on modern GPU architectures, detailing asynchronous memory transfers, warp specialization, and FP8 precision.',
+                'isDynamic' => false,
+                'sourceLabel' => 'Optimization',
+            ],
+        ];
+
+        $dynamicSuggestions = [];
+        if ($conversations && $conversations->isNotEmpty()) {
+            $seenTitles = [];
+            foreach ($conversations->take(5) as $conv) {
+                $title = trim($conv->title ?? '');
+                if (!$title || in_array(strtolower($title), ['new discussion', 'new chat', 'hi', 'hello', 'test'])) {
+                    continue;
+                }
+                if (in_array(strtolower($title), $seenTitles)) {
+                    continue;
+                }
+                $seenTitles[] = strtolower($title);
+
+                $tLower = strtolower($title);
+                if (str_contains($tLower, 'physics') || str_contains($tLower, 'raymarch') || str_contains($tLower, 'relativist') || str_contains($tLower, 'black hole')) {
+                    $dynamicSuggestions[] = [
+                        'id' => 'dyn-' . $conv->id,
+                        'title' => 'Kerr Accretion Disk Simulation',
+                        'subtitle' => 'General relativistic magnetohydrodynamics & Doppler frame transformation',
+                        'tag' => 'Astrophysics & GR',
+                        'category' => 'science',
+                        'previewGradient' => 'from-[#635bff]/25 via-indigo-950/30 to-purple-950/30',
+                        'prompt' => 'Expand our relativistic raymarching exploration with General Relativistic Magnetohydrodynamics (GRMHD) equations and synchrotron emission tables for spinning black holes.',
+                        'isDynamic' => true,
+                        'sourceLabel' => '✨ Based on: ' . Str::limit($title, 22),
+                    ];
+                } elseif (str_contains($tLower, 'invest') || str_contains($tLower, 'finance') || str_contains($tLower, 'equity') || str_contains($tLower, 'macro') || str_contains($tLower, 'memorandum')) {
+                    $dynamicSuggestions[] = [
+                        'id' => 'dyn-' . $conv->id,
+                        'title' => 'Macro Cross-Asset Risk Matrix',
+                        'subtitle' => 'Yield curve inversion indicators, sovereign credit spreads & dollar liquidity',
+                        'tag' => 'Macro Strategies',
+                        'category' => 'finance',
+                        'previewGradient' => 'from-emerald-900/20 via-teal-900/20 to-slate-900/25',
+                        'prompt' => 'Conduct an institutional risk analysis connecting sovereign bond yield curve inversions with cross-asset equity equity risk premiums (ERP). Output tabular breakdowns.',
+                        'isDynamic' => true,
+                        'sourceLabel' => '✨ Based on: ' . Str::limit($title, 22),
+                    ];
+                } elseif (str_contains($tLower, 'architect') || str_contains($tLower, 'system') || str_contains($tLower, 'cloud') || str_contains($tLower, 'database') || str_contains($tLower, 'review')) {
+                    $dynamicSuggestions[] = [
+                        'id' => 'dyn-' . $conv->id,
+                        'title' => 'Resilient Event-Driven Microservices',
+                        'subtitle' => 'Outbox pattern, idempotent consumer consensus & zero-downtime canary deployment',
+                        'tag' => 'Distributed Systems',
+                        'category' => 'cloud',
+                        'previewGradient' => 'from-blue-900/20 via-indigo-900/20 to-purple-900/25',
+                        'prompt' => 'Design an enterprise transactional outbox pipeline with CDC (Change Data Capture) via Debezium and Kafka to guarantee atomic dual-writes across distributed microservices.',
+                        'isDynamic' => true,
+                        'sourceLabel' => '✨ Based on: ' . Str::limit($title, 22),
+                    ];
+                } elseif (str_contains($tLower, 'code') || str_contains($tLower, 'laravel') || str_contains($tLower, 'react') || str_contains($tLower, 'api')) {
+                    $dynamicSuggestions[] = [
+                        'id' => 'dyn-' . $conv->id,
+                        'title' => 'High-Concurrency API Gateway',
+                        'subtitle' => 'Token bucket rate-limiting, JWT cache replication & circuit breaker policies',
+                        'tag' => 'Backend Engineering',
+                        'category' => 'code',
+                        'previewGradient' => 'from-[#5465ff]/20 via-violet-900/20 to-neutral-900/25',
+                        'prompt' => 'Architect a high-concurrency API gateway layer featuring token bucket rate-limiting with Redis, automated circuit-breaking, and end-to-end distributed tracing headers.',
+                        'isDynamic' => true,
+                        'sourceLabel' => '✨ Based on: ' . Str::limit($title, 22),
+                    ];
+                } else {
+                    $dynamicSuggestions[] = [
+                        'id' => 'dyn-' . $conv->id,
+                        'title' => 'Deep Dive: ' . Str::limit($title, 26),
+                        'subtitle' => 'Advanced theoretical expansion, comparative tradeoffs & executive roadmap',
+                        'tag' => 'Follow-up Synthesis',
+                        'category' => 'ai',
+                        'previewGradient' => 'from-[#635bff]/20 via-purple-900/15 to-neutral-900/20',
+                        'prompt' => 'Provide an advanced, deep-dive expansion on "' . $title . '", detailing technical architecture, edge cases, comparative benchmarks, and an implementation checklist.',
+                        'isDynamic' => true,
+                        'sourceLabel' => '✨ Based on recent chat',
+                    ];
+                }
+            }
+        }
+
+        return array_merge($dynamicSuggestions, $demoPool);
     }
 }

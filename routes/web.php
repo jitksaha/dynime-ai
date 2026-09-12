@@ -33,6 +33,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
     Route::get('/api/chat/stream', [ChatController::class, 'stream'])->name('chat.stream');
     Route::post('/api/chat/attachments', [ChatController::class, 'uploadAttachment'])->name('chat.attachments.upload');
+    Route::get('/api/chat/inspirations', [ChatController::class, 'getInspirations'])->name('chat.inspirations');
 
     // Pricing Actions (Protected)
     Route::post('/api/plans/select', [PricingController::class, 'selectPlan'])->name('pricing.select');

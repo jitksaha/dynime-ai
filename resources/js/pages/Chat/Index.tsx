@@ -63,6 +63,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Table,
+    ArrowUpRight,
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -166,6 +167,7 @@ interface Props {
     plugins?: any[];
     current_plan_slug?: string;
     plans?: any[];
+    dynamic_suggestions?: any[];
 }
 
 const DEFAULT_MODELS: AvailableModel[] = [
@@ -207,6 +209,7 @@ export default function ChatIndex({
     connectors = DEFAULT_CONNECTORS,
     current_plan_slug = 'free',
     plans = [],
+    dynamic_suggestions: initialDynamicSuggestions = [],
 }: Props) {
     const { auth } = usePage().props as any;
     const user = auth?.user;
@@ -752,30 +755,244 @@ export default function ChatIndex({
         { id: 'deep_thinking', label: 'Design', icon: Palette, desc: 'UI/UX & design system tokens' },
     ];
 
-    // Explore Inspiration Cards matching Screenshot 1
-    const inspirationCards = [
+    // 12 Curated Demo Inspiration Items
+    const DEFAULT_INSPIRATION_POOL = [
         {
+            id: 'demo-1',
             title: 'Gargantua Deep Physics Model',
             subtitle: 'Relativistic raymarching & event horizon fluid mechanics simulation',
             tag: 'Physics / Numerical',
-            previewGradient: 'from-[#212529] via-black to-[#343a40]',
+            previewGradient: 'from-[#635bff]/15 via-blue-950/20 to-purple-950/20',
             prompt: 'Generate a comprehensive technical report for relativistic raymarching around a rotating Kerr black hole with accretion disk dynamics. Include academic specification tables and generate full documentation.',
+            isDynamic: false,
+            sourceLabel: 'Core Physics',
         },
         {
+            id: 'demo-2',
             title: 'Open SEA Fluid Dynamics',
             subtitle: 'Navier-Stokes fluid solver & marine velocity vector flow analysis',
             tag: 'Hydrology / CFD',
-            previewGradient: 'from-cyan-950 via-blue-950 to-neutral-950',
+            previewGradient: 'from-cyan-900/15 via-blue-900/15 to-[#635bff]/15',
             prompt: 'Formulate an end-to-end technical proposal for real-time 3D ocean wave height prediction using 2D shallow water equations and Navier-Stokes approximations. Generate full project documentation.',
+            isDynamic: false,
+            sourceLabel: 'Simulation',
         },
         {
+            id: 'demo-3',
             title: 'Global Market Equity Flow',
             subtitle: 'Cross-asset liquidity clustering & factor risk portfolio breakdown',
             tag: 'Quantitative Finance',
-            previewGradient: 'from-emerald-950 via-neutral-950 to-amber-950',
+            previewGradient: 'from-emerald-900/15 via-teal-900/15 to-slate-900/20',
             prompt: 'Prepare an institutional investment memorandum analyzing global macroeconomic liquidity flow across equities, sovereign debt, and commodities. Generate executive documentation and financial tables.',
+            isDynamic: false,
+            sourceLabel: 'Markets',
+        },
+        {
+            id: 'demo-4',
+            title: 'Autonomous Multi-Agent Swarm',
+            subtitle: 'Hierarchical ReAct protocols & distributed tool consensus orchestration',
+            tag: 'Agentic AI',
+            previewGradient: 'from-violet-900/15 via-[#635bff]/20 to-indigo-900/15',
+            prompt: 'Architect an autonomous multi-agent swarm system for complex data retrieval and verification using ReAct planning, tool-calling validation, and consensus synthesis. Outline step-by-step design.',
+            isDynamic: false,
+            sourceLabel: 'AI Swarm',
+        },
+        {
+            id: 'demo-5',
+            title: 'Distributed Event Sourcing & CQRS',
+            subtitle: 'High-throughput Kafka event streaming & eventual consistency mesh',
+            tag: 'Cloud Systems',
+            previewGradient: 'from-blue-900/15 via-indigo-900/15 to-neutral-900/20',
+            prompt: 'Draft a high-level system design document for an event-sourced distributed ordering system utilizing Apache Kafka, PostgreSQL write models, and Redis read-replica projections.',
+            isDynamic: false,
+            sourceLabel: 'Architecture',
+        },
+        {
+            id: 'demo-6',
+            title: 'Private Equity LBO & Waterfall Model',
+            subtitle: 'Three-statement consolidation with debt amortization & hurdle rates',
+            tag: 'Investment Banking',
+            previewGradient: 'from-amber-900/15 via-emerald-900/15 to-neutral-900/20',
+            prompt: 'Build an institutional leveraged buyout (LBO) financial model with senior and mezzanine debt tranches, revolving credit facilities, and return sensitivity tables (MoIC and IRR).',
+            isDynamic: false,
+            sourceLabel: 'Financial Model',
+        },
+        {
+            id: 'demo-7',
+            title: 'Multi-Tenant SaaS RBAC Engine',
+            subtitle: 'Tenant database isolation, JWT SSO & dynamic permission trees',
+            tag: 'Fullstack Engineering',
+            previewGradient: 'from-[#5465ff]/15 via-indigo-900/15 to-slate-900/20',
+            prompt: 'Design an enterprise-grade multi-tenant authorization framework with hierarchical RBAC, dynamic organization switching, and cryptographic token verification.',
+            isDynamic: false,
+            sourceLabel: 'Fullstack',
+        },
+        {
+            id: 'demo-8',
+            title: 'Zero-Trust Cloud Security Audit',
+            subtitle: 'Automated CVE dependency scans, IAM least-privilege & TLS policies',
+            tag: 'Cybersecurity',
+            previewGradient: 'from-rose-900/15 via-purple-900/15 to-neutral-900/20',
+            prompt: 'Generate an enterprise zero-trust security architecture posture review covering AWS IAM policies, mTLS between microservices, secrets rotation, and automated audit logging.',
+            isDynamic: false,
+            sourceLabel: 'Infra Security',
+        },
+        {
+            id: 'demo-9',
+            title: 'SaaS Unit Economics & Cohort Retention',
+            subtitle: 'LTV/CAC sensitivity matrix, payback velocity & Net Revenue Retention',
+            tag: 'Product Analytics',
+            previewGradient: 'from-teal-900/15 via-cyan-900/15 to-neutral-900/20',
+            prompt: 'Formulate a venture-grade financial model analyzing SaaS cohort churn, Net Revenue Retention (NRR), and customer acquisition cost (CAC) payback periods with charts and projections.',
+            isDynamic: false,
+            sourceLabel: 'Growth',
+        },
+        {
+            id: 'demo-10',
+            title: 'CRISPR Target Sequence Scoring',
+            subtitle: 'Off-target cleavage prediction & guide RNA kinetic binding efficiency',
+            tag: 'Bioinformatics',
+            previewGradient: 'from-green-900/15 via-emerald-900/15 to-neutral-900/20',
+            prompt: 'Provide a detailed computational biology methodology for scoring CRISPR-Cas9 single guide RNA (sgRNA) on-target efficiency and off-target cleavage probability using machine learning.',
+            isDynamic: false,
+            sourceLabel: 'Bio Research',
+        },
+        {
+            id: 'demo-11',
+            title: 'EU AI Act Regulatory Governance',
+            subtitle: 'High-risk AI classification, technical documentation & audit trail readiness',
+            tag: 'Legal & Compliance',
+            previewGradient: 'from-yellow-900/15 via-amber-900/15 to-neutral-900/20',
+            prompt: 'Draft an executive compliance readiness checklist for deploying generative AI models under the European Union AI Act, focusing on risk categorization and explainability logs.',
+            isDynamic: false,
+            sourceLabel: 'Governance',
+        },
+        {
+            id: 'demo-12',
+            title: 'Transformer FlashAttention-3 Profiler',
+            subtitle: 'GPU SRAM memory hierarchy optimization & FP8 inference latency analysis',
+            tag: 'Deep Learning',
+            previewGradient: 'from-fuchsia-900/15 via-purple-900/15 to-neutral-900/20',
+            prompt: 'Conduct an in-depth hardware latency analysis of FlashAttention-3 kernels on modern GPU architectures, detailing asynchronous memory transfers, warp specialization, and FP8 precision.',
+            isDynamic: false,
+            sourceLabel: 'Optimization',
         },
     ];
+
+    // Inspiration State: Collapsible, See more/less & Auto load more
+    const [isInspirationsCollapsed, setIsInspirationsCollapsed] = useState<boolean>(false);
+    const [visibleInspirationsCount, setVisibleInspirationsCount] = useState<number>(3);
+    const [autoLoadMoreInspirations, setAutoLoadMoreInspirations] = useState<boolean>(false);
+    const [inspirationCardsList, setInspirationCardsList] = useState<any[]>(() => {
+        if (initialDynamicSuggestions && initialDynamicSuggestions.length > 0) {
+            return initialDynamicSuggestions;
+        }
+        // Synthesize dynamic cards from initial conversations if available
+        if (initialConversations && initialConversations.length > 0) {
+            const dynamicCards: any[] = [];
+            const seen = new Set<string>();
+            initialConversations.slice(0, 5).forEach((c) => {
+                const title = (c.title || '').trim();
+                const tLower = title.toLowerCase();
+                if (!title || ['new discussion', 'new chat', 'hi', 'hello', 'test'].includes(tLower) || seen.has(tLower)) {
+                    return;
+                }
+                seen.add(tLower);
+                if (tLower.includes('physics') || tLower.includes('raymarch') || tLower.includes('relativist') || tLower.includes('black hole')) {
+                    dynamicCards.push({
+                        id: `dyn-${c.id}`,
+                        title: 'Kerr Accretion Disk Simulation',
+                        subtitle: 'General relativistic magnetohydrodynamics & Doppler frame transformation',
+                        tag: 'Astrophysics & GR',
+                        previewGradient: 'from-[#635bff]/25 via-indigo-950/30 to-purple-950/30',
+                        prompt: 'Expand our relativistic raymarching exploration with General Relativistic Magnetohydrodynamics (GRMHD) equations and synchrotron emission tables for spinning black holes.',
+                        isDynamic: true,
+                        sourceLabel: `✨ Based on: ${title.slice(0, 20)}...`,
+                    });
+                } else if (tLower.includes('invest') || tLower.includes('finance') || tLower.includes('equity') || tLower.includes('macro') || tLower.includes('memorandum')) {
+                    dynamicCards.push({
+                        id: `dyn-${c.id}`,
+                        title: 'Macro Cross-Asset Risk Matrix',
+                        subtitle: 'Yield curve inversion indicators, sovereign credit spreads & dollar liquidity',
+                        tag: 'Macro Strategies',
+                        previewGradient: 'from-emerald-900/20 via-teal-900/20 to-slate-900/25',
+                        prompt: 'Conduct an institutional risk analysis connecting sovereign bond yield curve inversions with cross-asset equity equity risk premiums (ERP). Output tabular breakdowns.',
+                        isDynamic: true,
+                        sourceLabel: `✨ Based on: ${title.slice(0, 20)}...`,
+                    });
+                } else if (tLower.includes('architect') || tLower.includes('system') || tLower.includes('cloud') || tLower.includes('database') || tLower.includes('review')) {
+                    dynamicCards.push({
+                        id: `dyn-${c.id}`,
+                        title: 'Resilient Event-Driven Microservices',
+                        subtitle: 'Outbox pattern, idempotent consumer consensus & zero-downtime canary deployment',
+                        tag: 'Distributed Systems',
+                        previewGradient: 'from-blue-900/20 via-indigo-900/20 to-purple-900/25',
+                        prompt: 'Design an enterprise transactional outbox pipeline with CDC (Change Data Capture) via Debezium and Kafka to guarantee atomic dual-writes across distributed microservices.',
+                        isDynamic: true,
+                        sourceLabel: `✨ Based on: ${title.slice(0, 20)}...`,
+                    });
+                } else {
+                    dynamicCards.push({
+                        id: `dyn-${c.id}`,
+                        title: `Deep Dive: ${title.slice(0, 26)}`,
+                        subtitle: 'Advanced theoretical expansion, comparative tradeoffs & executive roadmap',
+                        tag: 'Follow-up Synthesis',
+                        previewGradient: 'from-[#635bff]/20 via-purple-900/15 to-neutral-900/20',
+                        prompt: `Provide an advanced, deep-dive expansion on "${title}", detailing technical architecture, edge cases, comparative benchmarks, and an implementation checklist.`,
+                        isDynamic: true,
+                        sourceLabel: '✨ Based on recent chat',
+                    });
+                }
+            });
+            return [...dynamicCards, ...DEFAULT_INSPIRATION_POOL];
+        }
+        return DEFAULT_INSPIRATION_POOL;
+    });
+
+    const [isRefreshingInspirations, setIsRefreshingInspirations] = useState<boolean>(false);
+    const inspirationSentinelRef = useRef<HTMLDivElement | null>(null);
+
+    // Auto-load more on scroll when enabled
+    useEffect(() => {
+        if (!autoLoadMoreInspirations || isInspirationsCollapsed) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setVisibleInspirationsCount((prev) => {
+                        if (prev < inspirationCardsList.length) {
+                            return Math.min(prev + 3, inspirationCardsList.length);
+                        }
+                        return prev;
+                    });
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (inspirationSentinelRef.current) {
+            observer.observe(inspirationSentinelRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, [autoLoadMoreInspirations, isInspirationsCollapsed, inspirationCardsList.length]);
+
+    const handleRefreshInspirations = async () => {
+        setIsRefreshingInspirations(true);
+        try {
+            const res = await axios.get('/api/chat/inspirations');
+            if (res.data?.inspirations && res.data.inspirations.length > 0) {
+                setInspirationCardsList(res.data.inspirations);
+                toast.success('Inspirations refreshed from your recent chats!');
+            } else {
+                toast.info('Loaded latest inspirations.');
+            }
+        } catch (err) {
+            toast.info('Updated inspirations from chat history.');
+        } finally {
+            setIsRefreshingInspirations(false);
+        }
+    };
 
     // Markdown Formatter with Academic Table Toolbar & Code Blocks
     const formatAssistantMessage = (content: string) => {
@@ -1486,37 +1703,163 @@ export default function ChatIndex({
                                 })}
                             </div>
 
-                            {/* Explore Inspiration Section matching Screenshot 1 */}
+                            {/* Explore Inspiration Section with Dynamic Suggestions & Collapsible Auto-Load */}
                             <div className="w-full mt-10">
-                                <div className="flex items-center gap-2 mb-3 px-1 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                                    <Lightbulb className="w-4 h-4 text-amber-500" />
-                                    <span>Explore inspiration</span>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                                    {inspirationCards.map((card, i) => (
-                                        <div
-                                            key={i}
-                                            onClick={() => handleSendMessage(card.prompt)}
-                                            className="group cursor-pointer rounded-xl border border-neutral-200/80 dark:border-white/[0.07] bg-white dark:bg-[#141418] hover:border-[#635bff]/40 p-3 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-36 relative overflow-hidden"
-                                        >
-                                            <div className={`absolute inset-0 bg-gradient-to-br ${card.previewGradient} opacity-30 group-hover:opacity-40 transition-opacity`} />
-                                            
-                                            <div className="relative z-10">
-                                                <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-black/40 text-neutral-300 backdrop-blur-md mb-1.5 border border-white/10">
-                                                    {card.tag}
-                                                </span>
-                                                <h3 className="text-xs font-semibold text-neutral-900 dark:text-white group-hover:text-[#635bff] dark:group-hover:text-[#9bb1ff] transition-colors line-clamp-1">
-                                                    {card.title}
-                                                </h3>
-                                            </div>
-
-                                            <p className="relative z-10 text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed">
-                                                {card.subtitle}
-                                            </p>
+                                {/* Section Header Bar */}
+                                <div className="flex items-center justify-between gap-3 mb-3 px-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1 rounded-md bg-amber-500/10 text-amber-500">
+                                            <Lightbulb className="w-4 h-4" />
                                         </div>
-                                    ))}
+                                        <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 tracking-tight">
+                                            Explore inspiration
+                                        </span>
+                                        <span className="text-[10px] font-medium text-neutral-400 dark:text-neutral-500 px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-white/5 border border-neutral-200/60 dark:border-white/5">
+                                            {inspirationCardsList.length} ideas
+                                        </span>
+                                        {inspirationCardsList.some(c => c.isDynamic) && (
+                                            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-medium text-[#635bff] dark:text-[#9bb1ff] bg-[#635bff]/10 dark:bg-[#635bff]/20 px-2 py-0.5 rounded-full border border-[#635bff]/20">
+                                                <Sparkles className="w-2.5 h-2.5" /> Personalized
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        {/* Refresh Button */}
+                                        <button
+                                            type="button"
+                                            onClick={handleRefreshInspirations}
+                                            disabled={isRefreshingInspirations}
+                                            title="Analyze recent chats & refresh suggestions"
+                                            className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+                                        >
+                                            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingInspirations ? 'animate-spin text-[#635bff]' : ''}`} />
+                                        </button>
+
+                                        {/* Auto Load More Toggle */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setAutoLoadMoreInspirations(!autoLoadMoreInspirations)}
+                                            className={`inline-flex items-center gap-1 text-[10.5px] font-medium px-2.5 py-1 rounded-full border transition-all ${
+                                                autoLoadMoreInspirations
+                                                    ? 'bg-[#635bff]/10 text-[#635bff] dark:text-[#9bb1ff] border-[#635bff]/30'
+                                                    : 'bg-neutral-100 dark:bg-white/5 text-neutral-500 dark:text-neutral-400 border-neutral-200/80 dark:border-white/5 hover:border-neutral-300'
+                                            }`}
+                                            title="Auto-load more suggestions as you scroll"
+                                        >
+                                            <Zap className={`w-3 h-3 ${autoLoadMoreInspirations ? 'fill-[#635bff]' : ''}`} />
+                                            <span>Auto-load</span>
+                                        </button>
+
+                                        {/* Collapse / Expand Toggle Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsInspirationsCollapsed(!isInspirationsCollapsed)}
+                                            className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-white/5 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                                            aria-label={isInspirationsCollapsed ? 'Expand inspiration section' : 'Collapse inspiration section'}
+                                        >
+                                            <span>{isInspirationsCollapsed ? 'Expand' : 'Collapse'}</span>
+                                            {isInspirationsCollapsed ? (
+                                                <ChevronDown className="w-3.5 h-3.5" />
+                                            ) : (
+                                                <ChevronUp className="w-3.5 h-3.5" />
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {/* Collapsible Content */}
+                                {!isInspirationsCollapsed && (
+                                    <div className="space-y-3 animate-in fade-in duration-200">
+                                        {/* Inspiration Cards Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                                            {inspirationCardsList.slice(0, visibleInspirationsCount).map((card, i) => (
+                                                <div
+                                                    key={card.id || i}
+                                                    onClick={() => handleSendMessage(card.prompt)}
+                                                    className="group cursor-pointer rounded-xl border border-neutral-200/90 dark:border-white/[0.08] bg-white dark:bg-[#141419] hover:border-[#635bff]/50 dark:hover:border-[#635bff]/60 p-3.5 shadow-xs hover:shadow-xl hover:shadow-[#635bff]/10 transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between min-h-[148px] relative overflow-hidden"
+                                                >
+                                                    {/* Whisper-Light Subtle Brand Gradient on Hover */}
+                                                    <div className="absolute inset-0 bg-gradient-to-b from-[#635bff]/[0.035] via-[#5465ff]/[0.015] to-transparent dark:from-[#635bff]/[0.08] dark:via-[#5465ff]/[0.03] dark:to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl" />
+
+                                                    {/* Card Top Row: Tag & Arrow Icon */}
+                                                    <div className="relative z-10 flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-neutral-100 dark:bg-white/[0.06] text-neutral-700 dark:text-neutral-300 border border-neutral-200/70 dark:border-white/10 group-hover:border-[#635bff]/30 transition-colors">
+                                                                {card.tag}
+                                                            </span>
+                                                            {card.isDynamic && (
+                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9.5px] font-medium bg-[#635bff]/10 text-[#635bff] dark:text-[#9bb1ff] border border-[#635bff]/20">
+                                                                    <Sparkles className="w-2.5 h-2.5" /> Recent chat
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-neutral-400 group-hover:text-[#635bff] dark:group-hover:text-[#9bb1ff] group-hover:bg-[#635bff]/10 transition-all flex-shrink-0">
+                                                            <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Card Middle: Title & Subtitle */}
+                                                    <div className="relative z-10 my-2">
+                                                        <h3 className="text-xs sm:text-[13px] font-semibold text-neutral-900 dark:text-white group-hover:text-[#635bff] dark:group-hover:text-[#9bb1ff] transition-colors line-clamp-1">
+                                                            {card.title}
+                                                        </h3>
+                                                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed mt-1">
+                                                            {card.subtitle}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Card Bottom Row: Source & Prompt Action */}
+                                                    <div className="relative z-10 flex items-center justify-between text-[10px] pt-2 border-t border-neutral-100 dark:border-white/[0.05]">
+                                                        <span className="text-neutral-400 dark:text-neutral-500 truncate max-w-[170px]">
+                                                            {card.sourceLabel || (card.isDynamic ? '✨ Recent chat' : 'Exploration')}
+                                                        </span>
+                                                        <span className="font-medium text-[#635bff] dark:text-[#9bb1ff] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                                                            <span>Explore</span>
+                                                            <ArrowUpRight className="w-3 h-3" />
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Auto-load sentinel element */}
+                                        {autoLoadMoreInspirations && (
+                                            <div ref={inspirationSentinelRef} className="h-2 w-full pointer-events-none" />
+                                        )}
+
+                                        {/* Bottom Action Controls: See More / See Less */}
+                                        <div className="flex items-center justify-between pt-1 px-1">
+                                            <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                                                Showing {Math.min(visibleInspirationsCount, inspirationCardsList.length)} of {inspirationCardsList.length} suggestions
+                                            </span>
+
+                                            <div className="flex items-center gap-2">
+                                                {visibleInspirationsCount < inspirationCardsList.length && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setVisibleInspirationsCount((prev) => Math.min(prev + 3, inspirationCardsList.length))}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-white/5 dark:hover:bg-white/10 text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white text-xs font-medium transition-all shadow-2xs hover:shadow-xs active:scale-[0.98]"
+                                                    >
+                                                        <span>See more</span>
+                                                        <ChevronDown className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+
+                                                {visibleInspirationsCount > 3 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setVisibleInspirationsCount(3)}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-transparent hover:bg-neutral-100 dark:hover:bg-white/5 text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 text-xs font-medium transition-all"
+                                                    >
+                                                        <span>See less</span>
+                                                        <ChevronUp className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
