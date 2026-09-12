@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Head, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/AppLayout';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import axios from 'axios';
 import {
     Sparkles,
-    Send,
+    ArrowUp,
     Plus,
     Search,
     Paperclip,
@@ -19,17 +17,31 @@ import {
     User as UserIcon,
     Zap,
     Brain,
-    Code,
-    Eye,
+    Code2,
     Compass,
     FileText,
     X,
     Loader2,
     PanelLeft,
     PanelLeftClose,
+    Shield,
+    Sliders,
+    LogOut,
+    ChevronDown,
+    ExternalLink,
     CheckCircle2,
-    RotateCw,
+    Globe,
+    Layers,
+    FileSpreadsheet,
+    Palette,
+    CheckSquare,
 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Message {
     id: number;
@@ -79,10 +91,12 @@ export default function ChatIndex({
     active_providers = [],
     capabilities = [],
 }: Props) {
+    const { auth } = usePage().props as any;
+    const user = auth?.user;
+
     const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
     const [activeConv, setActiveConv] = useState<Conversation | null>(initial_conversation);
     const [messages, setMessages] = useState<Message[]>(initial_conversation?.messages || []);
-    const [searchQuery, setSearchQuery] = useState('');
     const [inputValue, setInputValue] = useState('');
     const [selectedCapability, setSelectedCapability] = useState<string>(
         initial_conversation?.capability_profile || 'auto'
@@ -92,21 +106,33 @@ export default function ChatIndex({
     const [isUploading, setIsUploading] = useState(false);
     const [copiedId, setCopiedId] = useState<number | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Auto-scroll to bottom
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
+    // Auto-scroll
     useEffect(() => {
-        scrollToBottom();
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isGenerating]);
 
-    // Select conversation
+    // Keyboard shortcut ⌘K for new chat
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                handleNewChat();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedCapability]);
+
+    const ssoLoginUrl = `https://account.dynime.com/login?client_id=dynime_ai_app&redirect=${encodeURIComponent(
+        window.location.origin + '/auth/sso/callback'
+    )}`;
+
     const handleSelectConversation = async (conv: Conversation) => {
         if (activeConv?.uuid === conv.uuid) return;
         try {
@@ -115,11 +141,10 @@ export default function ChatIndex({
             setMessages(res.data.messages || []);
             setSelectedCapability(res.data.capability_profile || 'auto');
         } catch (e) {
-            toast.error('Failed to load discussion history.');
+            toast.error('Failed to load conversation history.');
         }
     };
 
-    // Create new conversation
     const handleNewChat = async () => {
         try {
             const res = await axios.post('/api/conversations', {
@@ -133,11 +158,13 @@ export default function ChatIndex({
             setAttachments([]);
             if (textareaRef.current) textareaRef.current.focus();
         } catch (e) {
-            toast.error('Failed to create new discussion.');
+            setActiveConv(null);
+            setMessages([]);
+            setInputValue('');
+            setAttachments([]);
         }
     };
 
-    // Pin/Unpin conversation
     const handleTogglePin = async (e: React.MouseEvent, conv: Conversation) => {
         e.stopPropagation();
         try {
@@ -149,16 +176,14 @@ export default function ChatIndex({
                     .map((c) => (c.uuid === conv.uuid ? { ...c, is_pinned: res.data.is_pinned } : c))
                     .sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0))
             );
-            toast.success(res.data.is_pinned ? 'Conversation pinned' : 'Conversation unpinned');
         } catch (e) {
-            toast.error('Could not update pin status.');
+            toast.error('Failed to update pin.');
         }
     };
 
-    // Delete conversation
     const handleDeleteConversation = async (e: React.MouseEvent, conv: Conversation) => {
         e.stopPropagation();
-        if (!confirm('Are you sure you want to delete this conversation?')) return;
+        if (!confirm('Delete this discussion?')) return;
         try {
             await axios.delete(`/api/conversations/${conv.uuid}`);
             const updated = conversations.filter((c) => c.uuid !== conv.uuid);
@@ -167,13 +192,12 @@ export default function ChatIndex({
                 setActiveConv(updated[0] || null);
                 setMessages(updated[0]?.messages || []);
             }
-            toast.success('Conversation deleted.');
+            toast.success('Discussion deleted.');
         } catch (e) {
-            toast.error('Failed to delete conversation.');
+            toast.error('Failed to delete discussion.');
         }
     };
 
-    // File attachment handler
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -189,7 +213,7 @@ export default function ChatIndex({
             setAttachments([...attachments, res.data]);
             toast.success(`Attached ${file.name}`);
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'File upload failed');
+            toast.error(err.response?.data?.message || 'Upload failed');
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -200,14 +224,12 @@ export default function ChatIndex({
         setAttachments(attachments.filter((_, i) => i !== index));
     };
 
-    // Send Message
     const handleSendMessage = async () => {
         const text = inputValue.trim();
         if (!text || isGenerating) return;
 
         let currentConv = activeConv;
 
-        // If no active conversation, create one
         if (!currentConv) {
             try {
                 const res = await axios.post('/api/conversations', {
@@ -247,8 +269,6 @@ export default function ChatIndex({
 
             if (res.data.success) {
                 setMessages((prev) => [...prev, res.data.response]);
-
-                // Update conversation list title
                 setConversations((prev) =>
                     prev.map((c) =>
                         c.uuid === currentConv!.uuid
@@ -258,14 +278,14 @@ export default function ChatIndex({
                 );
             }
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || 'Failed to generate response.';
+            const errorMsg = err.response?.data?.message || 'Connection error with AI Engine.';
             toast.error(errorMsg);
             setMessages((prev) => [
                 ...prev,
                 {
                     id: Date.now() + 1,
                     role: 'assistant',
-                    content: `⚠️ Connection Error: ${errorMsg}. Please verify AI provider configuration in Admin Settings.`,
+                    content: `⚠️ Error: ${errorMsg}. Please verify provider keys in Admin Settings.`,
                     capability_profile: selectedCapability,
                     created_at: new Date().toISOString(),
                 },
@@ -275,7 +295,6 @@ export default function ChatIndex({
         }
     };
 
-    // Copy response content
     const handleCopy = (content: string, id: number) => {
         navigator.clipboard.writeText(content);
         setCopiedId(id);
@@ -283,228 +302,395 @@ export default function ChatIndex({
         toast.success('Copied to clipboard');
     };
 
-    // Filter conversations
     const filteredConversations = conversations.filter((c) =>
         c.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const capabilityIcons: Record<string, any> = {
-        auto: Sparkles,
-        fast: Zap,
-        deep_thinking: Brain,
-        coding: Code,
-        vision: Eye,
-        research: Compass,
-        creative: Sparkles,
+    const capabilityLabels: Record<string, string> = {
+        auto: 'Instant',
+        fast: 'Fast ⚡',
+        deep_thinking: 'High Reasoning 🧠',
+        coding: 'Code Specialist 💻',
+        vision: 'Vision & Multimodal 👁️',
+        research: 'Deep Research 🔍',
+        creative: 'Creative Copy ✨',
     };
 
     return (
-        <AppLayout fullWidth>
-            <Head title="Chat & Reasoning - Dynime AI" />
+        <div className="flex h-screen w-screen overflow-hidden bg-[#0f0f12] text-[#ececed] font-sans antialiased selection:bg-purple-600 selection:text-white">
+            <Head title="Dynime AI - Enterprise Intelligence" />
 
-            <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden bg-white dark:bg-slate-950">
-                {/* 1. Sidebar */}
-                <aside
-                    className={`fixed inset-y-14 left-0 z-30 md:static flex flex-col w-72 border-r border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 backdrop-blur-md transition-all duration-300 ${
-                        isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-none'
-                    }`}
-                >
-                    {/* Top Action / New Chat */}
-                    <div className="p-3 border-b border-slate-200 dark:border-slate-800 space-y-2">
-                        <Button
-                            onClick={handleNewChat}
-                            className="w-full justify-start gap-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs shadow-sm"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span>New Discussion</span>
-                        </Button>
-
-                        {/* Search input */}
-                        <div className="relative">
-                            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <Input
-                                type="text"
-                                placeholder="Search discussions..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-8 h-8 rounded-lg text-xs bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800"
-                            />
+            {/* Left Kimi-Style Sidebar */}
+            <aside
+                className={`fixed inset-y-0 left-0 z-40 md:static flex flex-col w-64 bg-[#141418] border-r border-[#222228] transition-all duration-300 ${
+                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:border-none'
+                }`}
+            >
+                {/* Brand & Collapse Header */}
+                <div className="h-14 px-4 flex items-center justify-between border-b border-[#222228]">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-500 flex items-center justify-center shadow-md shadow-purple-600/20">
+                            <Sparkles className="w-4 h-4 text-white" />
                         </div>
+                        <span className="font-heading font-bold text-base tracking-wide text-white">
+                            DYNIME
+                        </span>
                     </div>
 
-                    {/* Conversations List */}
-                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                        {filteredConversations.length === 0 ? (
-                            <div className="text-center py-8 px-4 text-xs text-slate-400">
-                                No discussions found. Start a new chat!
-                            </div>
-                        ) : (
-                            filteredConversations.map((conv) => {
-                                const isActive = activeConv?.uuid === conv.uuid;
-                                return (
-                                    <div
-                                        key={conv.uuid}
-                                        onClick={() => handleSelectConversation(conv)}
-                                        className={`group relative flex items-center justify-between p-2 rounded-lg text-xs cursor-pointer transition-colors ${
-                                            isActive
-                                                ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 font-medium border border-purple-200/60 dark:border-purple-800/40'
-                                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2 min-w-0 pr-2">
-                                            {conv.is_pinned && (
-                                                <Pin className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" />
-                                            )}
-                                            <span className="truncate">{conv.title}</span>
-                                        </div>
+                    <button
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+                        title="Collapse sidebar"
+                    >
+                        <PanelLeftClose className="w-4 h-4" />
+                    </button>
+                </div>
 
-                                        {/* Action Buttons on Hover */}
-                                        <div className="hidden group-hover:flex items-center gap-1 flex-shrink-0">
-                                            <button
-                                                onClick={(e) => handleTogglePin(e, conv)}
-                                                className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-amber-500"
-                                                title={conv.is_pinned ? 'Unpin' : 'Pin'}
-                                            >
-                                                <Pin className="w-3 h-3" />
-                                            </button>
-                                            <button
-                                                onClick={(e) => handleDeleteConversation(e, conv)}
-                                                className="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-600"
-                                                title="Delete"
-                                            >
-                                                <Trash2 className="w-3 h-3" />
-                                            </button>
-                                        </div>
+                {/* + New Chat Button with ⌘K */}
+                <div className="p-3">
+                    <button
+                        onClick={handleNewChat}
+                        className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#202026] hover:bg-[#282830] border border-white/5 text-white text-xs font-medium transition-colors shadow-sm group"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Plus className="w-4 h-4 text-purple-400 group-hover:rotate-90 transition-transform duration-200" />
+                            <span>New Chat</span>
+                        </div>
+                        <kbd className="text-[10px] font-mono text-neutral-400 px-1.5 py-0.5 rounded bg-black/40 border border-white/10">
+                            ⌘ K
+                        </kbd>
+                    </button>
+                </div>
+
+                {/* Discussions List */}
+                <div className="flex-1 overflow-y-auto px-2 space-y-1">
+                    <div className="px-2 pt-2 pb-1 text-[11px] font-medium text-neutral-400">
+                        Discussions
+                    </div>
+
+                    {filteredConversations.length === 0 ? (
+                        <div className="px-3 py-6 text-center text-xs text-neutral-400">
+                            No chat history yet.
+                        </div>
+                    ) : (
+                        filteredConversations.map((conv) => {
+                            const isActive = activeConv?.uuid === conv.uuid;
+                            return (
+                                <div
+                                    key={conv.uuid}
+                                    onClick={() => handleSelectConversation(conv)}
+                                    className={`group flex items-center justify-between px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                                        isActive
+                                            ? 'bg-purple-950/40 text-purple-200 border border-purple-800/40'
+                                            : 'text-neutral-300 hover:bg-[#1f1f25] hover:text-white'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2 min-w-0 pr-1">
+                                        {conv.is_pinned && <Pin className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />}
+                                        <span className="truncate">{conv.title}</span>
                                     </div>
-                                );
-                            })
+
+                                    <div className="hidden group-hover:flex items-center gap-1 flex-shrink-0">
+                                        <button
+                                            onClick={(e) => handleTogglePin(e, conv)}
+                                            className="p-1 rounded hover:bg-neutral-800 text-neutral-400 hover:text-amber-400"
+                                            title="Pin"
+                                        >
+                                            <Pin className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleDeleteConversation(e, conv)}
+                                            className="p-1 rounded hover:bg-rose-950/50 text-neutral-400 hover:text-rose-400"
+                                            title="Delete"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+
+                {/* Footer User / Account Center */}
+                <div className="p-3 border-t border-[#222228] bg-[#121216]">
+                    {user ? (
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <img
+                                    src={user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6d28d9&color=fff`}
+                                    alt={user.name}
+                                    className="w-7 h-7 rounded-md object-cover border border-white/10"
+                                />
+                                <div className="truncate">
+                                    <p className="text-xs font-semibold text-white truncate">{user.name}</p>
+                                    <a
+                                        href="https://account.dynime.com"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[10px] text-purple-400 hover:underline flex items-center gap-0.5"
+                                    >
+                                        <span>Account Center</span>
+                                        <ExternalLink className="w-2.5 h-2.5" />
+                                    </a>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => router.post('/logout')}
+                                className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-neutral-800"
+                                title="Sign out"
+                            >
+                                <LogOut className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    ) : (
+                        <a
+                            href={ssoLoginUrl}
+                            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium transition-colors shadow-sm"
+                        >
+                            <Shield className="w-3.5 h-3.5" />
+                            <span>Log in via Dynime Account</span>
+                        </a>
+                    )}
+                </div>
+            </aside>
+
+            {/* Main Area */}
+            <main className="flex-1 flex flex-col h-full bg-[#0f0f12] overflow-hidden relative">
+                {/* Top Nav Bar */}
+                <header className="h-14 px-4 flex items-center justify-between border-b border-[#1c1c22] bg-[#0f0f12]/80 backdrop-blur-md z-10">
+                    <div className="flex items-center gap-3">
+                        {!isSidebarOpen && (
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+                                title="Expand sidebar"
+                            >
+                                <PanelLeft className="w-4 h-4" />
+                            </button>
+                        )}
+                        {activeConv && (
+                            <span className="text-xs font-medium text-neutral-300 truncate max-w-xs sm:max-w-md">
+                                {activeConv.title}
+                            </span>
                         )}
                     </div>
 
-                    {/* Active Providers Status Footer */}
-                    <div className="p-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>{active_providers.length} Engine{active_providers.length === 1 ? '' : 's'} Online</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400">DComposer v2</span>
-                    </div>
-                </aside>
+                    <div className="flex items-center gap-3">
+                        {user?.role === 'admin' && (
+                            <>
+                                <Link
+                                    href="/admin"
+                                    className="text-xs text-neutral-400 hover:text-purple-400 flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                                >
+                                    <Shield className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Admin</span>
+                                </Link>
+                                <Link
+                                    href="/admin/settings"
+                                    className="text-xs text-neutral-400 hover:text-purple-400 flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                                >
+                                    <Sliders className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Engines</span>
+                                </Link>
+                            </>
+                        )}
 
-                {/* 2. Main Chat Center Canvas */}
-                <main className="flex-1 flex flex-col min-w-0 h-full bg-white dark:bg-slate-950">
-                    {/* Top Capability Selector Bar */}
-                    <div className="h-12 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/30">
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-                                title="Toggle Sidebar"
+                        <a
+                            href="https://account.dynime.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-neutral-400 hover:text-purple-400 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
+                        >
+                            <span>account.dynime.com</span>
+                            <ExternalLink className="w-3 h-3" />
+                        </a>
+
+                        {!user && (
+                            <a
+                                href={ssoLoginUrl}
+                                className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-md shadow-purple-600/20"
                             >
-                                {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
-                            </button>
+                                Log in
+                            </a>
+                        )}
+                    </div>
+                </header>
 
-                            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[200px] sm:max-w-xs">
-                                {activeConv?.title || 'New Discussion'}
-                            </span>
-                        </div>
+                {/* Content Area */}
+                {messages.length === 0 ? (
+                    /* KIMI-STYLE HERO CENTER CANVAS */
+                    <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 max-w-3xl mx-auto w-full">
+                        {/* Huge KIMI-Style Brand Title */}
+                        <h1 className="font-heading text-4xl sm:text-5xl font-extrabold tracking-widest text-white mb-8 select-none">
+                            DYNIME
+                        </h1>
 
-                        {/* Capability Pills */}
-                        <div className="flex items-center gap-1 overflow-x-auto py-1 max-w-full">
-                            {capabilities.map((cap) => {
-                                const Icon = capabilityIcons[cap.id] || Sparkles;
-                                const isSelected = selectedCapability === cap.id;
-                                return (
+                        {/* Centered Input Card */}
+                        <div className="w-full bg-[#1b1b20] border border-white/10 rounded-2xl p-3 shadow-2xl focus-within:border-purple-500/80 transition-all duration-200">
+                            {/* Attachments preview */}
+                            {attachments.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-2 px-1">
+                                    {attachments.map((att, index) => (
+                                        <div
+                                            key={index}
+                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-950/60 border border-purple-800/40 text-[11px] text-purple-300"
+                                        >
+                                            <FileText className="w-3 h-3" />
+                                            <span className="max-w-[140px] truncate">{att.name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAttachment(index)}
+                                                className="hover:text-rose-400"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Textarea */}
+                            <textarea
+                                ref={textareaRef}
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSendMessage();
+                                    }
+                                }}
+                                placeholder="Ask anything, or task an agent..."
+                                rows={2}
+                                className="w-full bg-transparent border-none text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-0 resize-none px-2 py-1 leading-relaxed"
+                            />
+
+                            {/* Bottom Card Controls */}
+                            <div className="flex items-center justify-between pt-2 px-1 border-t border-white/5">
+                                {/* Attach File */}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    onChange={handleFileUpload}
+                                    className="hidden"
+                                />
+                                <button
+                                    type="button"
+                                    disabled={isUploading || isGenerating}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40"
+                                    title="Attach document or file"
+                                >
+                                    {isUploading ? <Loader2 className="w-4 h-4 animate-spin text-purple-400" /> : <Plus className="w-4 h-4" />}
+                                </button>
+
+                                <div className="flex items-center gap-2">
+                                    {/* Capability Selector Dropdown */}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-neutral-800/80 hover:bg-neutral-800 text-neutral-300 border border-white/5">
+                                                <span>{capabilityLabels[selectedCapability] || 'Instant'}</span>
+                                                <ChevronDown className="w-3 h-3 opacity-60" />
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-48 bg-[#1a1a20] border-[#2d2d35] text-white">
+                                            {capabilities.map((cap) => (
+                                                <DropdownMenuItem
+                                                    key={cap.id}
+                                                    onClick={() => setSelectedCapability(cap.id)}
+                                                    className="text-xs cursor-pointer hover:bg-purple-950/60"
+                                                >
+                                                    {cap.name}
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+
+                                    {/* Send Button (Kimi circle with up-arrow) */}
                                     <button
-                                        key={cap.id}
                                         type="button"
-                                        onClick={() => setSelectedCapability(cap.id)}
-                                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all duration-150 whitespace-nowrap ${
-                                            isSelected
-                                                ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/20'
-                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800'
+                                        disabled={!inputValue.trim() || isGenerating}
+                                        onClick={handleSendMessage}
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                                            inputValue.trim() && !isGenerating
+                                                ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-600/30'
+                                                : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
                                         }`}
                                     >
-                                        <Icon className="w-3.5 h-3.5" />
-                                        <span>{cap.name}</span>
+                                        {isGenerating ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <ArrowUp className="w-4 h-4" />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Action Chips (Kimi Style) */}
+                        <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+                            {[
+                                { id: 'deep_thinking', label: 'Deep Research', icon: Compass },
+                                { id: 'coding', label: 'Code Specialist', icon: Code2 },
+                                { id: 'research', label: 'Web & Docs', icon: Globe },
+                                { id: 'fast', label: 'Instant Chat', icon: Zap },
+                                { id: 'creative', label: 'Creative Copy', icon: Palette },
+                            ].map((chip) => {
+                                const Icon = chip.icon;
+                                return (
+                                    <button
+                                        key={chip.id}
+                                        onClick={() => {
+                                            setSelectedCapability(chip.id);
+                                            if (textareaRef.current) textareaRef.current.focus();
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181c] hover:bg-[#222228] border border-white/5 text-xs text-neutral-300 hover:text-white transition-all shadow-sm"
+                                    >
+                                        <Icon className="w-3.5 h-3.5 text-purple-400" />
+                                        <span>{chip.label}</span>
                                     </button>
                                 );
                             })}
                         </div>
                     </div>
-
-                    {/* Messages Scroll Area */}
-                    <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6">
-                        {messages.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto py-12">
-                                <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4">
-                                    <Sparkles className="w-6 h-6" />
-                                </div>
-                                <h3 className="font-heading text-lg font-bold text-slate-800 dark:text-white">
-                                    Dynime AI Enterprise Studio
-                                </h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
-                                    Unified multi-model intelligence. Ask complex strategic questions, generate clean code, analyze files, or brainstorm.
-                                </p>
-
-                                {/* Quick Starter Chips */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-6 w-full text-left">
-                                    {[
-                                        { title: 'Full-Stack Architecture', sub: 'Generate scalable API services', cap: 'coding' },
-                                        { title: 'Strategic Analysis', sub: 'Deep reasoning & business intelligence', cap: 'deep_thinking' },
-                                        { title: 'Document Synthesis', sub: 'Analyze logs, reports & text data', cap: 'research' },
-                                        { title: 'Rapid Automation', sub: 'Concise workflow orchestration', cap: 'fast' },
-                                    ].map((starter, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => {
-                                                setSelectedCapability(starter.cap);
-                                                setInputValue(starter.title + ': ');
-                                                if (textareaRef.current) textareaRef.current.focus();
-                                            }}
-                                            className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-purple-500/50 hover:bg-purple-50/20 dark:hover:bg-purple-950/20 transition-all text-xs"
-                                        >
-                                            <p className="font-semibold text-slate-800 dark:text-slate-200">{starter.title}</p>
-                                            <p className="text-[11px] text-slate-500">{starter.sub}</p>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : (
-                            messages.map((msg, index) => {
+                ) : (
+                    /* ACTIVE CHAT CANVAS */
+                    <div className="flex-1 flex flex-col min-h-0">
+                        {/* Messages List */}
+                        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6 max-w-3xl mx-auto w-full">
+                            {messages.map((msg, index) => {
                                 const isUser = msg.role === 'user';
                                 return (
                                     <div
                                         key={msg.id || index}
-                                        className={`flex gap-3 max-w-3xl ${isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                                        className={`flex gap-3.5 ${isUser ? 'ml-auto flex-row-reverse max-w-xl' : 'mr-auto max-w-2xl'}`}
                                     >
-                                        {/* Avatar */}
                                         <div
-                                            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-semibold ${
+                                            className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-semibold ${
                                                 isUser
-                                                    ? 'bg-slate-800 text-white dark:bg-slate-700'
+                                                    ? 'bg-neutral-800 text-white'
                                                     : 'bg-gradient-to-tr from-purple-700 to-indigo-600 text-white shadow-md shadow-purple-600/20'
                                             }`}
                                         >
-                                            {isUser ? <UserIcon className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                                            {isUser ? <UserIcon className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                                         </div>
 
-                                        {/* Message Bubble Content */}
                                         <div
-                                            className={`group relative rounded-xl p-4 text-xs ${
+                                            className={`rounded-2xl p-4 text-xs ${
                                                 isUser
-                                                    ? 'bg-purple-600 text-white rounded-tr-none'
-                                                    : 'bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-tl-none'
+                                                    ? 'bg-purple-600 text-white rounded-tr-none shadow-md shadow-purple-600/10'
+                                                    : 'bg-[#18181c] border border-white/5 text-[#ececed] rounded-tl-none'
                                             }`}
                                         >
-                                            <div className="prose-ai whitespace-pre-wrap">{msg.content}</div>
+                                            <div className="prose-ai whitespace-pre-wrap leading-relaxed">{msg.content}</div>
 
-                                            {/* Meta & Copy Button */}
                                             {!isUser && (
-                                                <div className="flex items-center justify-between gap-4 mt-3 pt-2 border-t border-slate-200/50 dark:border-slate-800/60 text-[10px] text-slate-400">
+                                                <div className="flex items-center justify-between gap-4 mt-3 pt-2 border-t border-white/5 text-[10px] text-neutral-400">
                                                     <div className="flex items-center gap-2">
                                                         {msg.provider && (
-                                                            <span className="uppercase tracking-wider font-semibold text-purple-600 dark:text-purple-400">
+                                                            <span className="uppercase tracking-wider font-semibold text-purple-400">
                                                                 {msg.provider}
                                                             </span>
                                                         )}
@@ -513,12 +699,12 @@ export default function ChatIndex({
 
                                                     <button
                                                         onClick={() => handleCopy(msg.content, msg.id)}
-                                                        className="flex items-center gap-1 p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                                        className="flex items-center gap-1 p-1 rounded hover:bg-white/10 text-neutral-400 hover:text-white"
                                                     >
                                                         {copiedId === msg.id ? (
                                                             <>
-                                                                <Check className="w-3 h-3 text-emerald-500" />
-                                                                <span className="text-emerald-500">Copied</span>
+                                                                <Check className="w-3 h-3 text-emerald-400" />
+                                                                <span className="text-emerald-400">Copied</span>
                                                             </>
                                                         ) : (
                                                             <>
@@ -532,97 +718,92 @@ export default function ChatIndex({
                                         </div>
                                     </div>
                                 );
-                            })
-                        )}
+                            })}
 
-                        {/* Generating indicator */}
-                        {isGenerating && (
-                            <div className="flex gap-3 max-w-3xl mr-auto">
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-700 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 animate-pulse">
-                                    <Bot className="w-4 h-4" />
-                                </div>
-                                <div className="rounded-xl rounded-tl-none p-4 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 flex items-center gap-2">
-                                    <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
-                                    <span>Dynime AI is synthesizing response...</span>
-                                </div>
-                            </div>
-                        )}
-
-                        <div ref={messagesEndRef} />
-                    </div>
-
-                    {/* Input Composer Box */}
-                    <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
-                        {/* Attachments preview */}
-                        {attachments.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-2">
-                                {attachments.map((att, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 text-[11px] text-purple-700 dark:text-purple-300"
-                                    >
-                                        <FileText className="w-3 h-3" />
-                                        <span className="max-w-[150px] truncate">{att.name}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeAttachment(index)}
-                                            className="hover:text-rose-500"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
+                            {isGenerating && (
+                                <div className="flex gap-3 max-w-2xl mr-auto">
+                                    <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-700 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 animate-pulse">
+                                        <Bot className="w-3.5 h-3.5" />
                                     </div>
-                                ))}
+                                    <div className="rounded-2xl rounded-tl-none p-4 bg-[#18181c] border border-white/5 text-xs text-neutral-400 flex items-center gap-2">
+                                        <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                                        <span>Dynime AI is synthesizing response...</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* Bottom Input Box */}
+                        <div className="p-4 border-t border-[#1c1c22] bg-[#0f0f12]/90 backdrop-blur-md">
+                            <div className="max-w-3xl mx-auto w-full bg-[#1b1b20] border border-white/10 rounded-xl p-2.5 shadow-lg focus-within:border-purple-500/80">
+                                {attachments.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {attachments.map((att, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-purple-950/60 border border-purple-800/40 text-[11px] text-purple-300"
+                                            >
+                                                <FileText className="w-3 h-3" />
+                                                <span className="max-w-[120px] truncate">{att.name}</span>
+                                                <button onClick={() => removeAttachment(index)} className="hover:text-rose-400">
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="flex items-end gap-2">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        onChange={handleFileUpload}
+                                        className="hidden"
+                                    />
+                                    <button
+                                        type="button"
+                                        disabled={isUploading || isGenerating}
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10"
+                                    >
+                                        <Paperclip className="w-4 h-4" />
+                                    </button>
+
+                                    <textarea
+                                        ref={textareaRef}
+                                        value={inputValue}
+                                        onChange={(e) => setInputValue(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSendMessage();
+                                            }
+                                        }}
+                                        placeholder="Message Dynime AI..."
+                                        rows={1}
+                                        className="flex-1 bg-transparent border-none text-xs text-white placeholder-neutral-500 focus:outline-none resize-none max-h-32 py-1"
+                                    />
+
+                                    <button
+                                        type="button"
+                                        disabled={!inputValue.trim() || isGenerating}
+                                        onClick={handleSendMessage}
+                                        className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                                            inputValue.trim() && !isGenerating
+                                                ? 'bg-purple-600 text-white'
+                                                : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        <ArrowUp className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
                             </div>
-                        )}
-
-                        <div className="flex items-end gap-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 focus-within:border-purple-500 transition-colors">
-                            {/* Attach File Button */}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                onChange={handleFileUpload}
-                                className="hidden"
-                            />
-                            <button
-                                type="button"
-                                disabled={isUploading || isGenerating}
-                                onClick={() => fileInputRef.current?.click()}
-                                className="p-2 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
-                                title="Attach Document or File"
-                            >
-                                {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
-                            </button>
-
-                            {/* Textarea */}
-                            <textarea
-                                ref={textareaRef}
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSendMessage();
-                                    }
-                                }}
-                                placeholder="Message Dynime AI (Shift+Enter for newline)..."
-                                rows={1}
-                                className="flex-1 bg-transparent border-none text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-0 resize-none max-h-36 py-1.5"
-                            />
-
-                            {/* Send Button */}
-                            <Button
-                                type="button"
-                                size="sm"
-                                disabled={!inputValue.trim() || isGenerating}
-                                onClick={handleSendMessage}
-                                className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white h-8 px-3"
-                            >
-                                <Send className="w-3.5 h-3.5" />
-                            </Button>
                         </div>
                     </div>
-                </main>
-            </div>
-        </AppLayout>
+                )}
+            </main>
+        </div>
     );
 }
