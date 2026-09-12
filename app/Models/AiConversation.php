@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class AiConversation extends Model
 {
@@ -26,6 +27,15 @@ class AiConversation extends Model
         'is_pinned' => 'boolean',
         'is_archived' => 'boolean',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($conversation) {
+            if (empty($conversation->uuid)) {
+                $conversation->uuid = (string) Str::uuid();
+            }
+        });
+    }
 
     public function user(): BelongsTo
     {
