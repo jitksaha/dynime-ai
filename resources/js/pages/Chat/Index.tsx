@@ -70,6 +70,7 @@ import {
     Info,
     MessageSquare,
     FolderArchive,
+    Search,
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -394,6 +395,8 @@ export default function ChatIndex({
     const [showLimitNotice, setShowLimitNotice] = useState(true);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Scroll to specific message or artifact
     const scrollToItem = (elementId: string) => {
@@ -815,6 +818,75 @@ export default function ChatIndex({
 
         return artifacts;
     };
+
+    // Real-time Chat Search by Title and in-depth Message Content
+    const searchResults = React.useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const q = searchQuery.toLowerCase().trim();
+        const results: Array<{
+            conv: Conversation;
+            matchType: 'title' | 'content';
+            snippet?: string;
+            messageId?: number;
+        }> = [];
+
+        // Check active conversation messages for content matches
+        if (activeConv && messages.length > 0) {
+            messages.forEach((msg) => {
+                if (msg.content && msg.content.toLowerCase().includes(q)) {
+                    const idx = msg.content.toLowerCase().indexOf(q);
+                    const start = Math.max(0, idx - 45);
+                    const end = Math.min(msg.content.length, idx + q.length + 65);
+                    const snippet = (start > 0 ? '...' : '') + msg.content.slice(start, end) + (end < msg.content.length ? '...' : '');
+                    results.push({
+                        conv: activeConv,
+                        matchType: 'content',
+                        snippet,
+                        messageId: msg.id,
+                    });
+                }
+            });
+        }
+
+        // Search conversation titles across all conversations
+        conversations.forEach((conv) => {
+            if (conv.title.toLowerCase().includes(q)) {
+                if (!results.some(r => r.conv.uuid === conv.uuid && r.matchType === 'title')) {
+                    results.push({
+                        conv,
+                        matchType: 'title',
+                    });
+                }
+            }
+        });
+
+        return results;
+    }, [searchQuery, conversations, activeConv, messages]);
+
+    const handleSelectSearchResult = async (result: typeof searchResults[0]) => {
+        setIsSearchModalOpen(false);
+        setSearchQuery('');
+        if (activeConv?.uuid !== result.conv.uuid) {
+            await handleSelectConversation(result.conv);
+        }
+        if (result.messageId) {
+            setTimeout(() => {
+                scrollToItem('msg-' + result.messageId);
+            }, 250);
+        }
+    };
+
+    // Global keyboard shortcut: Cmd+F or Ctrl+F to open chat search
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                setIsSearchModalOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     // Collect all attachments & generated deliverables dynamically for the Library drawer
     const chatLibraryItems = React.useMemo(() => {
@@ -1285,27 +1357,40 @@ export default function ChatIndex({
                     isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:w-0 md:min-w-0 md:max-w-0 md:border-none md:overflow-hidden'
                 }`}
             >
-                {/* Brand Header with Logo Container & Toggle [|] matching Screenshot 1 */}
-                <div className="h-14 px-3.5 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06] flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                        {/* White square icon badge with rounded corners matching Kimi style */}
-                        <div className="w-7 h-7 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-200/80 dark:border-white/10 flex items-center justify-center shadow-xs">
-                            <img
-                                src="https://cdn.dynime.com/Dynime%20Logo/LOGO%20PNG/dynime-logo.png"
-                                alt="Dynime"
-                                className="h-3.5 w-auto object-contain dark:brightness-0 dark:invert"
-                            />
-                        </div>
+                {/* Brand Header: Dynime Brand Icon + DYNIME AI + Search Bar + Collapse Toggle */}
+                <div className="h-14 px-3 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06] flex-shrink-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <img
+                            src="/images/dynime-ai-logo.png"
+                            alt="Dynime AI"
+                            className="w-5 h-5 object-contain flex-shrink-0"
+                        />
+                        <span className="font-bold tracking-wider text-[12.5px] text-neutral-900 dark:text-white uppercase font-sans select-none">
+                            DYNIME AI
+                        </span>
                     </div>
 
-                    {/* Sidebar Collapse Toggle Button [|] matching Screenshot 1 */}
-                    <button
-                        onClick={() => setIsSidebarOpen(false)}
-                        className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-200/60 dark:hover:bg-white/[0.06] transition-colors"
-                        title="Collapse sidebar"
-                    >
-                        <PanelLeft className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Search Chats Button (⌘F) */}
+                        <button
+                            type="button"
+                            onClick={() => setIsSearchModalOpen(true)}
+                            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-200/60 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                            title="Search chats (⌘F)"
+                        >
+                            <Search className="w-4 h-4" />
+                        </button>
+
+                        {/* Sidebar Collapse Toggle Button [|] */}
+                        <button
+                            type="button"
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-200/60 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                            title="Collapse sidebar"
+                        >
+                            <PanelLeft className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* + New Chat Button with ⌘K matching Screenshot 1 */}
@@ -1900,24 +1985,36 @@ export default function ChatIndex({
                     previewDoc ? (isPreviewExpanded ? 'hidden' : 'w-full lg:w-1/2 border-r border-neutral-200 dark:border-white/[0.08]') : 'w-full'
                 }`}>
                     {/* Top Nav Bar */}
-                    <header className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/50 dark:border-white/[0.04] bg-white/70 dark:bg-[#0c0c0f]/70 backdrop-blur-md z-20 flex-shrink-0">
+                    <header className="h-14 px-4 flex items-center justify-between bg-white dark:bg-[#0c0c0f] z-20 flex-shrink-0 select-none">
                         {/* Left: Sidebar toggle + Active Chat Title Dropdown matching Screenshot 2 */}
                         <div className="flex items-center gap-2.5 min-w-0">
                             {!isSidebarOpen && (
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                    <div className="w-7 h-7 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200/80 dark:border-white/10 flex items-center justify-center shadow-xs">
-                                        <img
-                                            src="https://cdn.dynime.com/Dynime%20Logo/LOGO%20PNG/dynime-logo.png"
-                                            alt="Dynime"
-                                            className="h-3.5 w-auto object-contain dark:brightness-0 dark:invert"
-                                        />
-                                    </div>
                                     <button
+                                        type="button"
                                         onClick={() => setIsSidebarOpen(true)}
-                                        className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
+                                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors group cursor-pointer"
                                         title="Expand sidebar"
                                     >
-                                        <PanelLeft className="w-4 h-4" />
+                                        <img
+                                            src="/images/dynime-ai-logo.png"
+                                            alt="Dynime AI"
+                                            className="w-5 h-5 object-contain flex-shrink-0"
+                                        />
+                                        <span className="font-bold tracking-wider text-[12.5px] text-neutral-900 dark:text-white uppercase font-sans">
+                                            DYNIME AI
+                                        </span>
+                                        <PanelLeft className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-white ml-0.5" />
+                                    </button>
+
+                                    {/* Search Chats Button when sidebar collapsed */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsSearchModalOpen(true)}
+                                        className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                                        title="Search chats (⌘F)"
+                                    >
+                                        <Search className="w-4 h-4" />
                                     </button>
                                 </div>
                             )}
@@ -2015,10 +2112,11 @@ export default function ChatIndex({
                             </div>
                         )}
 
-                        {/* Right: Share Chat, Dynamic Library, Theme Toggle, Admin & Profile */}
+                        {/* Right: Share Chat and Dynamic Library only (Theme switcher and profile avatar removed per user request) */}
                         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                             {/* Share chat button with social preview modal */}
                             <button
+                                type="button"
                                 onClick={() => setIsShareModalOpen(true)}
                                 className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
                                 title="Share chat"
@@ -2028,6 +2126,7 @@ export default function ChatIndex({
 
                             {/* Dynamic Library button with counter badge */}
                             <button
+                                type="button"
                                 onClick={() => setIsLibraryOpen(true)}
                                 className="flex items-center gap-1.5 text-xs text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white px-2.5 py-1 rounded-lg bg-neutral-100 dark:bg-white/5 hover:bg-neutral-200/70 dark:hover:bg-white/[0.08] border border-neutral-200/60 dark:border-white/[0.05] transition-colors cursor-pointer"
                                 title="Chat Library: Files & Deliverables"
@@ -2035,102 +2134,6 @@ export default function ChatIndex({
                                 <FolderArchive className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff]" />
                                 <span className="font-semibold">{chatLibraryItems.length}</span>
                             </button>
-
-                            {/* Theme Switcher Button */}
-                            <button
-                                onClick={toggleTheme}
-                                className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
-                                title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}
-                            >
-                                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#635bff]" />}
-                            </button>
-
-                            {user?.role === 'admin' && (
-                                <Link
-                                    href="/admin"
-                                    className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-[#635bff] dark:hover:text-[#788bff] flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
-                                >
-                                    <Shield className="w-3.5 h-3.5" />
-                                    <span className="hidden sm:inline">Admin</span>
-                                </Link>
-                            )}
-
-                            {/* Top Header Right: Dynamic Profile Avatar Icon with Dropdown Menu */}
-                            {user ? (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button
-                                            className="relative flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-[#635bff]/40 focus:outline-none transition-all group cursor-pointer"
-                                            title={(user.name || "User") + " (Dynime Account)"}
-                                        >
-                                            <img
-                                                src={avatarSrc || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.name || 'User') + "&background=7c3aed&color=fff"}
-                                                alt={user.name || 'User'}
-                                                className="w-7 h-7 rounded-full object-cover border border-neutral-200 dark:border-white/20 shadow-xs group-hover:scale-105 transition-transform"
-                                            />
-                                            {isProUser ? (
-                                                <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full text-[7.5px] font-bold bg-gradient-to-r from-amber-500 to-[#635bff] text-white border border-white dark:border-[#0c0c0f] shadow-xs">
-                                                    PRO
-                                                </span>
-                                            ) : (
-                                                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0c0c0f]" />
-                                            )}
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-64 bg-white dark:bg-[#16161b] border border-neutral-200 dark:border-white/10 text-neutral-900 dark:text-white shadow-2xl rounded-2xl p-1.5 font-sans z-[120]">
-                                        <div className="px-3 py-2.5 border-b border-neutral-100 dark:border-white/5">
-                                            <p className="text-xs font-bold text-neutral-900 dark:text-white truncate">{user.name}</p>
-                                            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">{user.email}</p>
-                                        </div>
-                                        <DropdownMenuItem asChild>
-                                            <a
-                                                href="https://account.dynime.com"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center justify-between text-xs py-2 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer font-medium text-neutral-700 dark:text-neutral-200"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <UserIcon className="w-4 h-4 text-[#635bff] dark:text-[#788bff]" />
-                                                    <span>Dynime Account Center</span>
-                                                </div>
-                                                <ExternalLink className="w-3 h-3 text-neutral-400" />
-                                            </a>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => setIsPricingModalOpen(true)}
-                                            className="flex items-center justify-between text-xs py-2 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-700 dark:text-neutral-200"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <ArrowUpCircle className="w-4 h-4 text-[#635bff]" />
-                                                <span>Upgrade Plan</span>
-                                            </div>
-                                            <span className="text-[10px] text-[#635bff] font-semibold bg-[#635bff]/15 px-1.5 py-0.2 rounded">Plans</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={() => setIsAppsModalOpen(true)}
-                                            className="flex items-center gap-2 text-xs py-2 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer text-neutral-700 dark:text-neutral-200"
-                                        >
-                                            <Download className="w-4 h-4 text-neutral-400" />
-                                            <span>Get Apps & Extensions</span>
-                                        </DropdownMenuItem>
-                                        <div className="my-1 border-t border-neutral-100 dark:border-white/5" />
-                                        <DropdownMenuItem
-                                            onClick={() => router.post('/logout')}
-                                            className="flex items-center gap-2 text-xs py-2 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 cursor-pointer"
-                                        >
-                                            <LogOut className="w-4 h-4" />
-                                            <span>Sign out</span>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            ) : (
-                                <a
-                                    href={ssoLoginUrl}
-                                    className="px-3 py-1.5 rounded-lg bg-[#635bff] hover:bg-[#5465ff] text-white text-xs font-semibold transition-all shadow-xs"
-                                >
-                                    Sign In
-                                </a>
-                            )}
                         </div>
                     </header>
 
@@ -2679,7 +2682,7 @@ export default function ChatIndex({
                             </div>
 
                             {/* Pinned Bottom Floating Input Bar matching Screenshots 2, 3, 4 */}
-                            <div className="px-4 pb-3 pt-1 bg-transparent flex-shrink-0">
+                            <div className="px-4 pb-3 pt-1 bg-white dark:bg-[#0c0c0f] flex-shrink-0">
                                 <div className="max-w-3xl mx-auto w-full space-y-1.5">
                                     <div className="w-full bg-white dark:bg-[#18181c] border border-neutral-200/90 dark:border-white/[0.08] hover:border-[#635bff]/40 focus-within:border-[#635bff] dark:focus-within:border-[#635bff]/60 rounded-xl px-3 py-1.5 sm:py-2 shadow-xs transition-all">
                                     {attachments.length > 0 && (
@@ -3845,6 +3848,95 @@ export default function ChatIndex({
                                 </div>
                             ))
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* REAL-TIME CHAT SEARCH MODAL (SPOTLIGHT) */}
+            {isSearchModalOpen && (
+                <div className="fixed inset-0 z-[160] flex items-start justify-center pt-16 sm:pt-24 bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+                    <div className="bg-white dark:bg-[#15151a] border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden text-neutral-900 dark:text-neutral-100 animate-in zoom-in-95 duration-150">
+                        {/* Search Input Bar */}
+                        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-neutral-100 dark:border-white/[0.06]">
+                            <Search className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+                            <input
+                                type="text"
+                                autoFocus
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search by chat title or message content in real-time..."
+                                className="flex-1 bg-transparent border-none outline-none text-xs sm:text-sm text-neutral-900 dark:text-white placeholder-neutral-400"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="p-1 rounded-md text-neutral-400 hover:text-neutral-600 dark:hover:text-white transition-colors"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                            <kbd className="hidden sm:inline-block text-[10px] font-mono text-neutral-400 px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10">
+                                ESC
+                            </kbd>
+                        </div>
+
+                        {/* Search Results List */}
+                        <div className="max-h-[380px] overflow-y-auto p-2 space-y-1 select-none">
+                            {!searchQuery.trim() ? (
+                                <div className="py-10 text-center text-xs text-neutral-400 space-y-1">
+                                    <Search className="w-6 h-6 mx-auto opacity-30 text-neutral-400 mb-2" />
+                                    <p className="font-medium">Type any keyword to search chats</p>
+                                    <p className="text-[11px] text-neutral-500">Searches titles across all discussions & content within messages</p>
+                                </div>
+                            ) : searchResults.length === 0 ? (
+                                <div className="py-10 text-center text-xs text-neutral-400 space-y-1">
+                                    <p className="font-medium">No results found for "{searchQuery}"</p>
+                                    <p className="text-[11px] text-neutral-500">Try a different title keyword or message phrasing</p>
+                                </div>
+                            ) : (
+                                searchResults.map((res, i) => (
+                                    <div
+                                        key={i}
+                                        onClick={() => handleSelectSearchResult(res)}
+                                        className="flex items-start gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/[0.06] cursor-pointer transition-colors group"
+                                    >
+                                        <div className="w-7 h-7 rounded-lg bg-[#635bff]/10 dark:bg-[#635bff]/20 flex items-center justify-center text-[#635bff] dark:text-[#9bb1ff] flex-shrink-0 mt-0.5">
+                                            <MessageSquare className="w-3.5 h-3.5" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <h4 className="text-xs font-semibold text-neutral-900 dark:text-white truncate group-hover:text-[#635bff] dark:group-hover:text-[#9bb1ff] transition-colors">
+                                                    {res.conv.title}
+                                                </h4>
+                                                <span className={`text-[9.5px] px-1.5 py-0.2 rounded font-mono uppercase ${
+                                                    res.matchType === 'content'
+                                                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                                        : 'bg-[#635bff]/15 text-[#635bff] dark:text-[#9bb1ff]'
+                                                }`}>
+                                                    {res.matchType === 'content' ? 'In Content' : 'Title Match'}
+                                                </span>
+                                            </div>
+                                            {res.snippet && (
+                                                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 mt-1 leading-relaxed font-sans">
+                                                    {res.snippet}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Footer hint */}
+                        <div className="px-4 py-2 bg-neutral-50 dark:bg-black/20 border-t border-neutral-100 dark:border-white/[0.04] flex items-center justify-between text-[11px] text-neutral-400">
+                            <span>{searchResults.length} matching result{searchResults.length === 1 ? '' : 's'}</span>
+                            <button
+                                onClick={() => setIsSearchModalOpen(false)}
+                                className="hover:text-neutral-900 dark:hover:text-white transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
