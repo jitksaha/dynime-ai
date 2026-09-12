@@ -749,7 +749,7 @@ export default function ChatIndex({
             title: 'Gargantua Deep Physics Model',
             subtitle: 'Relativistic raymarching & event horizon fluid mechanics simulation',
             tag: 'Physics / Numerical',
-            previewGradient: 'from-amber-950 via-black to-purple-950',
+            previewGradient: 'from-[#212529] via-black to-[#343a40]',
             prompt: 'Generate a comprehensive technical report for relativistic raymarching around a rotating Kerr black hole with accretion disk dynamics. Include academic specification tables and generate full documentation.',
         },
         {
@@ -818,7 +818,7 @@ export default function ChatIndex({
     };
 
     return (
-        <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0c0c0f] text-neutral-900 dark:text-neutral-100 font-sans antialiased selection:bg-purple-600 selection:text-white transition-colors duration-200">
+        <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0c0c0f] text-neutral-900 dark:text-neutral-100 font-sans antialiased selection:bg-[#635bff] selection:text-white transition-colors duration-200">
             <Head title="Dynime AI - Enterprise Intelligence" />
 
             {/* Left Kimi-Style Sidebar (Fixed Width 260px, Collapsible with transition) */}
@@ -857,10 +857,10 @@ export default function ChatIndex({
                         className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/[0.04] hover:bg-neutral-100 dark:hover:bg-white/[0.08] border border-neutral-200/80 dark:border-white/[0.07] text-neutral-800 dark:text-white text-xs font-medium transition-all shadow-xs group"
                     >
                         <div className="flex items-center gap-2">
-                            <Plus className="w-4 h-4 text-purple-600 dark:text-purple-400 group-hover:rotate-90 transition-transform duration-200" />
+                            <Plus className="w-4 h-4 text-[#635bff] dark:text-[#788bff] group-hover:rotate-90 transition-transform duration-200" />
                             <span>New Chat</span>
                         </div>
-                        <kbd className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-black/50 border border-neutral-200 dark:border-white/10 group-hover:text-purple-600 dark:group-hover:text-purple-300">
+                        <kbd className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-black/50 border border-neutral-200 dark:border-white/10 group-hover:text-[#635bff] dark:group-hover:text-[#9bb1ff]">
                             ⌘ K
                         </kbd>
                     </button>
@@ -872,7 +872,7 @@ export default function ChatIndex({
                         onClick={handleNewChat}
                         className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
                     >
-                        <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                        <Sparkles className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff]" />
                         <span className="font-medium">My Dynime</span>
                     </button>
 
@@ -979,7 +979,7 @@ export default function ChatIndex({
                         }}
                         className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
                     >
-                        <Code2 className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                        <Code2 className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff]" />
                         <span>Dynime Code</span>
                     </button>
 
@@ -1049,7 +1049,7 @@ export default function ChatIndex({
                                                     if (e.key === 'Enter') handleSaveRename(conv);
                                                     if (e.key === 'Escape') setEditingConvUuid(null);
                                                 }}
-                                                className="w-full bg-white dark:bg-neutral-800 border border-purple-500 rounded px-1.5 py-0.5 text-xs text-neutral-900 dark:text-white focus:outline-none"
+                                                className="w-full bg-white dark:bg-neutral-800 border border-[#635bff] rounded px-1.5 py-0.5 text-xs text-neutral-900 dark:text-white focus:outline-none"
                                             />
                                         ) : (
                                             <span className="truncate">{conv.title}</span>
@@ -1141,7 +1141,7 @@ export default function ChatIndex({
                     ) : (
                         <a
                             href={ssoLoginUrl}
-                            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium transition-all shadow-sm"
+                            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-[#635bff] hover:bg-[#5465ff] text-white text-xs font-medium transition-all shadow-sm"
                         >
                             <Shield className="w-3.5 h-3.5" />
                             <span>Log in with Dynime Account</span>
@@ -1226,13 +1226,13 @@ export default function ChatIndex({
                                 className="p-1.5 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/[0.06] transition-colors"
                                 title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}
                             >
-                                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-purple-600" />}
+                                {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-[#635bff]" />}
                             </button>
 
                             {user?.role === 'admin' && (
                                 <Link
                                     href="/admin"
-                                    className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
+                                    className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-[#635bff] dark:hover:text-[#788bff] flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
                                 >
                                     <Shield className="w-3.5 h-3.5" />
                                     <span className="hidden sm:inline">Admin</span>
@@ -1244,7 +1244,7 @@ export default function ChatIndex({
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <button
-                                            className="relative flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-purple-500/40 focus:outline-none transition-all group"
+                                            className="relative flex items-center p-0.5 rounded-full hover:ring-2 hover:ring-[#635bff]/40 focus:outline-none transition-all group"
                                             title={`${user.name} (Dynime Account)`}
                                         >
                                             <img
@@ -1268,7 +1268,7 @@ export default function ChatIndex({
                                                 className="flex items-center justify-between text-xs py-2 px-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-white/5 cursor-pointer font-medium text-neutral-700 dark:text-neutral-200"
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <UserIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                                    <UserIcon className="w-4 h-4 text-[#635bff] dark:text-[#788bff]" />
                                                     <span>Dynime Account Center</span>
                                                 </div>
                                                 <ExternalLink className="w-3 h-3 text-neutral-400" />
@@ -1301,7 +1301,7 @@ export default function ChatIndex({
                             ) : (
                                 <a
                                     href={ssoLoginUrl}
-                                    className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold shadow-xs transition-all"
+                                    className="px-3 py-1.5 rounded-lg bg-[#635bff] hover:bg-[#5465ff] text-white text-xs font-semibold shadow-xs transition-all"
                                 >
                                     Log in
                                 </a>
@@ -1321,7 +1321,7 @@ export default function ChatIndex({
                             </div>
 
                             {/* Centered Matte Input Card matching Screenshot 1 */}
-                            <div className="w-full bg-white dark:bg-[#18181c] border border-neutral-200/90 dark:border-white/[0.08] hover:border-purple-500/30 focus-within:border-purple-600 dark:focus-within:border-purple-500/50 rounded-2xl p-3.5 shadow-sm transition-all duration-200 relative">
+                            <div className="w-full bg-white dark:bg-[#18181c] border border-neutral-200/90 dark:border-white/[0.08] hover:border-[#635bff]/40 focus-within:border-[#635bff] dark:focus-within:border-[#635bff]/60 rounded-xl px-3 py-2 sm:py-2.5 shadow-xs transition-all duration-200 relative">
                                 {/* Top Right Green Live Status Dot matching Screenshot 1 */}
                                 <div className="absolute top-3.5 right-4 flex items-center">
                                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
@@ -1333,7 +1333,7 @@ export default function ChatIndex({
                                         {attachments.map((att, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/40 text-[11px] text-purple-700 dark:text-purple-300 shadow-xs"
+                                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#635bff]/10 dark:bg-[#635bff]/15 border border-[#635bff]/25 dark:border-[#635bff]/30 text-[11px] text-[#635bff] dark:text-[#9bb1ff] shadow-xs"
                                             >
                                                 <FileText className="w-3 h-3" />
                                                 <span className="max-w-[140px] truncate">{att.name}</span>
@@ -1362,7 +1362,7 @@ export default function ChatIndex({
                                     }}
                                     placeholder='Type "/" to invoke plugins and skills'
                                     rows={2}
-                                    className="w-full bg-transparent border-none text-[15px] text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-0 resize-none px-2 py-1 leading-relaxed"
+                                    className="w-full bg-transparent border-none text-[14px] text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-0 resize-none px-1 py-0.5 leading-normal"
                                 />
 
                                 {/* Inside Bottom Controls matching Screenshot 1 */}
@@ -1380,7 +1380,7 @@ export default function ChatIndex({
                                         className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors disabled:opacity-40"
                                         title="Attach document"
                                     >
-                                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin text-purple-600" /> : <Plus className="w-4 h-4" />}
+                                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin text-[#635bff]" /> : <Plus className="w-4 h-4" />}
                                     </button>
 
                                     <div className="flex items-center gap-2">
@@ -1397,10 +1397,10 @@ export default function ChatIndex({
                                                     <DropdownMenuItem
                                                         key={cap.id}
                                                         onClick={() => setSelectedCapability(cap.id)}
-                                                        className="text-xs cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/60 flex items-center justify-between py-2"
+                                                        className="text-xs cursor-pointer hover:bg-[#635bff]/10 hover:text-[#635bff] flex items-center justify-between py-2"
                                                     >
                                                         <span>{cap.name}</span>
-                                                        <span className="text-[10px] text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/80 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800/30">
+                                                        <span className="text-[10px] text-[#635bff] dark:text-[#788bff] bg-[#635bff]/10 dark:bg-[#635bff]/20 px-1.5 py-0.5 rounded border border-[#635bff]/25 dark:border-[#635bff]/30">
                                                             {cap.badge}
                                                         </span>
                                                     </DropdownMenuItem>
@@ -1414,8 +1414,7 @@ export default function ChatIndex({
                                             disabled={!inputValue.trim() || isGenerating}
                                             onClick={() => handleSendMessage()}
                                             className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                                                inputValue.trim() && !isGenerating
-                                                    ? 'bg-neutral-800 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-95'
+                                                inputValue.trim() && !isGenerating ? 'bg-[#635bff] text-white hover:bg-[#5465ff] active:scale-95 shadow-xs'
                                                     : 'bg-neutral-200 dark:bg-white/[0.06] text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
                                             }`}
                                         >
@@ -1467,7 +1466,7 @@ export default function ChatIndex({
                                             }}
                                             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-white/[0.03] hover:bg-neutral-50 dark:hover:bg-white/[0.08] border border-neutral-200/80 dark:border-white/[0.07] text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-all shadow-xs group"
                                         >
-                                            <Icon className="w-3.5 h-3.5 text-neutral-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" />
+                                            <Icon className="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#635bff] dark:group-hover:text-[#788bff] transition-colors" />
                                             <span>{chip.label}</span>
                                         </button>
                                     );
@@ -1486,7 +1485,7 @@ export default function ChatIndex({
                                         <div
                                             key={i}
                                             onClick={() => handleSendMessage(card.prompt)}
-                                            className="group cursor-pointer rounded-xl border border-neutral-200/80 dark:border-white/[0.07] bg-white dark:bg-[#141418] hover:border-purple-500/40 p-3 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-36 relative overflow-hidden"
+                                            className="group cursor-pointer rounded-xl border border-neutral-200/80 dark:border-white/[0.07] bg-white dark:bg-[#141418] hover:border-[#635bff]/40 p-3 shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-36 relative overflow-hidden"
                                         >
                                             <div className={`absolute inset-0 bg-gradient-to-br ${card.previewGradient} opacity-30 group-hover:opacity-40 transition-opacity`} />
                                             
@@ -1494,7 +1493,7 @@ export default function ChatIndex({
                                                 <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-black/40 text-neutral-300 backdrop-blur-md mb-1.5 border border-white/10">
                                                     {card.tag}
                                                 </span>
-                                                <h3 className="text-xs font-semibold text-neutral-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors line-clamp-1">
+                                                <h3 className="text-xs font-semibold text-neutral-900 dark:text-white group-hover:text-[#635bff] dark:group-hover:text-[#9bb1ff] transition-colors line-clamp-1">
                                                     {card.title}
                                                 </h3>
                                             </div>
@@ -1527,7 +1526,7 @@ export default function ChatIndex({
                                                                     key={aIdx}
                                                                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-neutral-100 dark:bg-[#1a1a20] border border-neutral-200 dark:border-white/10 text-xs text-neutral-800 dark:text-neutral-200 shadow-xs"
                                                                 >
-                                                                    <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                                                    <FileText className="w-4 h-4 text-[#635bff] dark:text-[#788bff]" />
                                                                     <div>
                                                                         <div className="font-medium max-w-[160px] truncate">{att.name || 'document_pdf'}</div>
                                                                         <div className="text-[10px] text-neutral-400 uppercase">PDF 561.04 KB</div>
@@ -1617,7 +1616,7 @@ export default function ChatIndex({
                                                                 <div
                                                                     key={doc.id}
                                                                     onClick={() => openPreview(doc)}
-                                                                    className="group flex items-center justify-between p-3.5 rounded-xl border border-neutral-200/90 dark:border-white/[0.08] bg-white dark:bg-[#16161b] hover:border-purple-500/40 dark:hover:border-purple-500/30 shadow-sm cursor-pointer transition-all duration-200"
+                                                                    className="group flex items-center justify-between p-3.5 rounded-xl border border-neutral-200/90 dark:border-white/[0.08] bg-white dark:bg-[#16161b] hover:border-[#635bff]/40 dark:hover:border-[#635bff]/30 shadow-sm cursor-pointer transition-all duration-200"
                                                                 >
                                                                     {/* Left Icon with Stacked Layer Depth matching Screenshot 3 */}
                                                                     <div className="flex items-center gap-3.5 min-w-0">
@@ -1629,12 +1628,12 @@ export default function ChatIndex({
                                                                             ) : doc.type === 'json' || doc.type === 'code' ? (
                                                                                 <FileCode className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
                                                                             ) : (
-                                                                                <FileText className="w-4.5 h-4.5 text-purple-600 dark:text-purple-400" />
+                                                                                <FileText className="w-4.5 h-4.5 text-[#635bff] dark:text-[#788bff]" />
                                                                             )}
                                                                         </div>
 
                                                                         <div className="truncate">
-                                                                            <h4 className="text-xs sm:text-[13px] font-semibold text-neutral-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                                                            <h4 className="text-xs sm:text-[13px] font-semibold text-neutral-900 dark:text-white truncate group-hover:text-[#635bff] dark:group-hover:text-[#788bff] transition-colors">
                                                                                 {doc.title}
                                                                             </h4>
                                                                             <p className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5 mt-0.5">
@@ -1649,7 +1648,7 @@ export default function ChatIndex({
                                                                     <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                                                                         <button
                                                                             onClick={() => openPreview(doc)}
-                                                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-100 dark:bg-neutral-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-neutral-800 dark:text-neutral-200 hover:text-purple-600 dark:hover:text-purple-300 border border-neutral-200 dark:border-white/10 transition-all shadow-xs"
+                                                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-100 dark:bg-neutral-800 hover:bg-[#635bff]/10 text-neutral-800 dark:text-neutral-200 hover:text-[#635bff] dark:hover:text-[#9bb1ff] border border-neutral-200 dark:border-white/10 transition-all shadow-xs"
                                                                         >
                                                                             <Eye className="w-3.5 h-3.5" />
                                                                             <span>Preview</span>
@@ -1696,7 +1695,7 @@ export default function ChatIndex({
                                                                 setLikedId(msg.id);
                                                                 toast.success('Feedback recorded: Helpful');
                                                             }}
-                                                            className={`hover:text-neutral-900 dark:hover:text-white transition-colors p-1 ${likedId === msg.id ? 'text-purple-600' : ''}`}
+                                                            className={`hover:text-neutral-900 dark:hover:text-white transition-colors p-1 ${likedId === msg.id ? 'text-[#635bff]' : ''}`}
                                                             title="Helpful"
                                                         >
                                                             <ThumbsUp className="w-3.5 h-3.5" />
@@ -1720,11 +1719,11 @@ export default function ChatIndex({
 
                                 {isGenerating && (
                                     <div className="flex items-center gap-3 pl-1">
-                                        <div className="w-6 h-6 rounded-md bg-purple-600 text-white flex items-center justify-center animate-pulse">
+                                        <div className="w-6 h-6 rounded-md bg-[#635bff] text-white flex items-center justify-center animate-pulse">
                                             <Sparkles className="w-3.5 h-3.5" />
                                         </div>
                                         <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                                            <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                                            <Loader2 className="w-4 h-4 animate-spin text-[#635bff]" />
                                             <span>Dynime AI is synthesizing response...</span>
                                         </div>
                                     </div>
@@ -1734,14 +1733,15 @@ export default function ChatIndex({
                             </div>
 
                             {/* Pinned Bottom Floating Input Bar matching Screenshots 2, 3, 4 */}
-                            <div className="p-4 border-t border-neutral-200/80 dark:border-white/[0.06] bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#0c0c0f] dark:via-[#0c0c0f]/95 backdrop-blur-xl flex-shrink-0">
-                                <div className="max-w-3xl mx-auto w-full bg-white dark:bg-[#18181c] border border-neutral-200/90 dark:border-white/[0.08] hover:border-purple-500/30 focus-within:border-purple-600 dark:focus-within:border-purple-500/50 rounded-2xl p-3 shadow-sm transition-all">
+                            <div className="px-4 pt-2 pb-2.5 border-t border-neutral-200/80 dark:border-white/[0.06] bg-gradient-to-t from-white via-white/95 to-transparent dark:from-[#0c0c0f] dark:via-[#0c0c0f]/95 backdrop-blur-xl flex-shrink-0">
+                                <div className="max-w-3xl mx-auto w-full space-y-1.5">
+                                    <div className="w-full bg-white dark:bg-[#18181c] border border-neutral-200/90 dark:border-white/[0.08] hover:border-[#635bff]/40 focus-within:border-[#635bff] dark:focus-within:border-[#635bff]/60 rounded-xl px-3 py-1.5 sm:py-2 shadow-xs transition-all">
                                     {attachments.length > 0 && (
                                         <div className="flex flex-wrap gap-2 mb-2 px-1">
                                             {attachments.map((att, index) => (
                                                 <div
                                                     key={index}
-                                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/40 text-[11px] text-purple-700 dark:text-purple-300"
+                                                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#635bff]/10 dark:bg-[#635bff]/15 border border-[#635bff]/25 dark:border-[#635bff]/30 text-[11px] text-[#635bff] dark:text-[#9bb1ff]"
                                                 >
                                                     <FileText className="w-3 h-3" />
                                                     <span className="max-w-[120px] truncate">{att.name}</span>
@@ -1768,8 +1768,8 @@ export default function ChatIndex({
                                             {activeSkills.map((sId) => {
                                                 const s = (essential_skills || DEFAULT_SKILLS).find(item => item.id === sId);
                                                 return (
-                                                    <span key={sId} className="inline-flex items-center gap-1 text-[11px] font-medium bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 px-2 py-0.5 rounded-md">
-                                                        <Zap className="w-3 h-3 text-purple-500" />
+                                                    <span key={sId} className="inline-flex items-center gap-1 text-[11px] font-medium bg-[#635bff]/10 dark:bg-[#635bff]/15 text-[#635bff] dark:text-[#9bb1ff] border border-[#635bff]/25 dark:border-[#635bff]/30 px-2 py-0.5 rounded-md">
+                                                        <Zap className="w-3 h-3 text-[#635bff]" />
                                                         {s?.name || sId}
                                                         <button onClick={() => toggleSkill(sId)} className="hover:text-rose-500 ml-0.5">
                                                             <X className="w-2.5 h-2.5" />
@@ -1841,12 +1841,12 @@ export default function ChatIndex({
                                                             className="w-full px-2.5 py-2 rounded-lg text-xs flex items-center justify-between hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors text-left"
                                                         >
                                                             <div className="flex items-center gap-2.5">
-                                                                <Zap className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                                                <Zap className="w-4 h-4 text-[#635bff] dark:text-[#788bff]" />
                                                                 <span>Skills</span>
                                                             </div>
                                                             <div className="flex items-center gap-1">
                                                                 {activeSkills.length > 0 && (
-                                                                    <span className="text-[10px] bg-purple-500/20 text-purple-600 dark:text-purple-300 px-1.5 py-0.2 rounded font-semibold">
+                                                                    <span className="text-[10px] bg-[#635bff]/20 text-[#635bff] dark:text-[#9bb1ff] px-1.5 py-0.2 rounded font-semibold">
                                                                         {activeSkills.length}
                                                                     </span>
                                                                 )}
@@ -1868,7 +1868,7 @@ export default function ChatIndex({
                                                                                 type="button"
                                                                                 onClick={() => toggleSkill(skill.id)}
                                                                                 className={`w-full px-2 py-1.5 rounded-lg text-xs flex items-center justify-between text-left transition-colors ${
-                                                                                    isChecked ? 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-medium' : 'hover:bg-neutral-100 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300'
+                                                                                    isChecked ? 'bg-[#635bff]/10 dark:bg-[#635bff]/15 text-[#635bff] dark:text-[#9bb1ff] font-medium' : 'hover:bg-neutral-100 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300'
                                                                                 }`}
                                                                             >
                                                                                 <div>
@@ -1879,7 +1879,7 @@ export default function ChatIndex({
                                                                                         </span>
                                                                                     </div>
                                                                                 </div>
-                                                                                {isChecked && <Check className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />}
+                                                                                {isChecked && <Check className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff]" />}
                                                                             </button>
                                                                         );
                                                                     })}
@@ -1994,7 +1994,7 @@ export default function ChatIndex({
                                             }}
                                             placeholder="Ask anything, or task an agent..."
                                             rows={1}
-                                            className="flex-1 bg-transparent border-none text-[15px] text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none resize-none max-h-32 py-1 leading-relaxed"
+                                            className="flex-1 bg-transparent border-none text-[14px] text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none resize-none max-h-32 py-0.5 leading-normal"
                                         />
 
                                         <div className="flex items-center gap-2">
@@ -2014,7 +2014,7 @@ export default function ChatIndex({
                                                         <DropdownMenuItem
                                                             key={cap.id}
                                                             onClick={() => setSelectedCapability(cap.id)}
-                                                            className="text-xs cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/60"
+                                                            className="text-xs cursor-pointer hover:bg-[#635bff]/10 hover:text-[#635bff]"
                                                         >
                                                             {cap.name}
                                                         </DropdownMenuItem>
@@ -2028,8 +2028,7 @@ export default function ChatIndex({
                                                 disabled={!inputValue.trim() || isGenerating}
                                                 onClick={() => handleSendMessage()}
                                                 className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
-                                                    inputValue.trim() && !isGenerating
-                                                        ? 'bg-neutral-800 dark:bg-white text-white dark:text-neutral-900 hover:opacity-90 active:scale-95'
+                                                    inputValue.trim() && !isGenerating ? 'bg-[#635bff] text-white hover:bg-[#5465ff] active:scale-95 shadow-xs'
                                                         : 'bg-neutral-200 dark:bg-white/[0.06] text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
                                                 }`}
                                             >
@@ -2040,7 +2039,7 @@ export default function ChatIndex({
                                 </div>
 
                                 {/* Claude-style Notice (Left) & Model Selector (Right) */}
-                                <div className="flex items-center justify-between px-2 pt-2 text-[12px] text-neutral-400 dark:text-neutral-500 select-none">
+                                <div className="flex items-center justify-between px-1 text-[11px] text-neutral-400 dark:text-neutral-500 select-none">
                                     <p className="truncate pr-2">
                                         Dynime is AI and can make mistakes. Please double-check responses.
                                     </p>
@@ -2077,7 +2076,7 @@ export default function ChatIndex({
                                                                 }}
                                                                 className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
                                                                     isSelected
-                                                                        ? 'bg-purple-50 dark:bg-purple-950/60 font-semibold text-purple-700 dark:text-purple-300'
+                                                                        ? 'bg-[#635bff]/10 dark:bg-[#635bff]/15 font-semibold text-[#635bff] dark:text-[#9bb1ff]'
                                                                         : 'hover:bg-neutral-100 dark:hover:bg-white/5 text-neutral-700 dark:text-neutral-300'
                                                                 }`}
                                                             >
@@ -2090,7 +2089,7 @@ export default function ChatIndex({
                                                                     </div>
                                                                 </div>
                                                                 {isSelected && (
-                                                                    <Check className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                                                                    <Check className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff] flex-shrink-0" />
                                                                 )}
                                                             </button>
                                                         );
@@ -2099,6 +2098,7 @@ export default function ChatIndex({
                                             </div>
                                         )}
                                     </div>
+                                </div>
                                 </div>
                             </div>
                         </div>
@@ -2111,7 +2111,7 @@ export default function ChatIndex({
                         <div className="bg-white dark:bg-[#191920] border border-neutral-200 dark:border-white/10 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden text-neutral-900 dark:text-white">
                             <div className="px-6 py-4 border-b border-neutral-200 dark:border-white/10 flex items-center justify-between">
                                 <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-lg bg-[#635bff]/10 dark:bg-[#635bff]/15 text-[#635bff] dark:text-[#788bff] flex items-center justify-center">
                                         <Sliders className="w-4 h-4" />
                                     </div>
                                     <div>
@@ -2132,7 +2132,7 @@ export default function ChatIndex({
                                     onClick={() => setSkillsModalTab('skills')}
                                     className={`py-3 border-b-2 transition-colors ${
                                         skillsModalTab === 'skills'
-                                            ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                                            ? 'border-[#635bff] text-[#635bff] dark:text-[#788bff]'
                                             : 'border-transparent text-neutral-500'
                                     }`}
                                 >
@@ -2142,7 +2142,7 @@ export default function ChatIndex({
                                     onClick={() => setSkillsModalTab('connectors')}
                                     className={`py-3 border-b-2 transition-colors ${
                                         skillsModalTab === 'connectors'
-                                            ? 'border-purple-600 text-purple-600 dark:text-purple-400'
+                                            ? 'border-[#635bff] text-[#635bff] dark:text-[#788bff]'
                                             : 'border-transparent text-neutral-500'
                                     }`}
                                 >
@@ -2173,7 +2173,7 @@ export default function ChatIndex({
                                                     onClick={() => toggleSkill(skill.id)}
                                                     className={`px-3 py-1 text-xs rounded-lg font-medium transition-colors ${
                                                         isAttached
-                                                            ? 'bg-purple-600 text-white'
+                                                            ? 'bg-[#635bff] text-white'
                                                             : 'bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300'
                                                     }`}
                                                 >
@@ -2234,7 +2234,7 @@ export default function ChatIndex({
                         <div className="h-14 px-4 flex items-center justify-between border-b border-neutral-200/80 dark:border-white/[0.06] bg-white dark:bg-[#15151a] flex-shrink-0 select-none">
                             <div className="flex items-center gap-2.5 min-w-0 pr-2">
                                 <div className="w-6 h-6 rounded-md bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-300 flex-shrink-0">
-                                    <FileText className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                                    <FileText className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff]" />
                                 </div>
                                 <span className="text-xs font-semibold text-neutral-900 dark:text-white truncate">
                                     {previewDoc.title}

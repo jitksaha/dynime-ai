@@ -28,13 +28,13 @@ export default function Login({ sso_login_url }: LoginProps) {
             <Head title="Sign in to Dynime AI" />
 
             {/* Background ambient lighting */}
-            <div className="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#635bff]/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
             <div className="w-full max-w-md relative z-10">
                 {/* Brand Logo & Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-500 shadow-xl shadow-purple-600/25 mb-4">
+                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-tr from-[#5465ff] via-[#635bff] to-[#788bff] shadow-xl shadow-[#635bff]/25 mb-4">
                         <Sparkles className="w-7 h-7 text-white" />
                     </div>
                     <h1 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-white">
@@ -51,11 +51,11 @@ export default function Login({ sso_login_url }: LoginProps) {
                     <div>
                         <a
                             href={sso_login_url}
-                            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium text-sm shadow-lg shadow-purple-600/25 transition-all duration-200 transform hover:-translate-y-0.5"
+                            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-[#635bff] via-[#5465ff] to-[#434ee0] hover:from-purple-500 hover:to-indigo-500 text-white font-medium text-sm shadow-lg shadow-[#635bff]/25 transition-all duration-200 transform hover:-translate-y-0.5"
                         >
-                            <Shield className="w-4 h-4 text-purple-200" />
+                            <Shield className="w-4 h-4 text-[#bfd7ff]" />
                             <span>Continue with Dynime Account Center</span>
-                            <ArrowRight className="w-4 h-4 ml-auto text-purple-200" />
+                            <ArrowRight className="w-4 h-4 ml-auto text-[#bfd7ff]" />
                         </a>
                         <p className="text-center text-[11px] text-slate-500 mt-2.5">
                             Unified SSO identity across Dynime ERP, AI & Cloud tools
@@ -96,7 +96,7 @@ export default function Login({ sso_login_url }: LoginProps) {
                                         onChange={(e) => setData('email', e.target.value)}
                                         placeholder="admin@dynime.com"
                                         required
-                                        className="pl-9 rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-600 focus:border-purple-500 text-xs h-9"
+                                        className="pl-9 rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-600 focus:border-[#635bff] text-xs h-9"
                                     />
                                 </div>
                                 {errors.email && <p className="text-xs text-rose-400 mt-1">{errors.email}</p>}
@@ -115,7 +115,7 @@ export default function Login({ sso_login_url }: LoginProps) {
                                         onChange={(e) => setData('password', e.target.value)}
                                         placeholder="••••••••••••"
                                         required
-                                        className="pl-9 rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-600 focus:border-purple-500 text-xs h-9"
+                                        className="pl-9 rounded-lg bg-slate-950 border-slate-800 text-white placeholder-slate-600 focus:border-[#635bff] text-xs h-9"
                                     />
                                 </div>
                                 {errors.password && <p className="text-xs text-rose-400 mt-1">{errors.password}</p>}

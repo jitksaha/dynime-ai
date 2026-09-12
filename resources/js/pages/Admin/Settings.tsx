@@ -157,7 +157,7 @@ export default function AdminSettings({ settings }: Props) {
                                     }}
                                     className={`w-full text-left p-3 rounded-xl text-xs font-medium flex items-center justify-between transition-colors ${
                                         isSelected
-                                            ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+                                            ? 'bg-[#635bff] text-white shadow-md shadow-[#635bff]/20'
                                             : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                                     }`}
                                 >
@@ -168,7 +168,7 @@ export default function AdminSettings({ settings }: Props) {
                                     {item.has_key && (
                                         <span
                                             className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                                                isSelected ? 'bg-purple-700 text-purple-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                                isSelected ? 'bg-[#5465ff] text-[#e2fdff]' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                                             }`}
                                         >
                                             Active
@@ -188,7 +188,7 @@ export default function AdminSettings({ settings }: Props) {
                                         {currentSetting.display_name} Engine Setup
                                     </h2>
                                     <p className="text-xs text-slate-500">
-                                        Provider Identifier: <code className="text-purple-600">{currentSetting.provider}</code>
+                                        Provider Identifier: <code className="text-[#635bff]">{currentSetting.provider}</code>
                                     </p>
                                 </div>
 
@@ -202,7 +202,7 @@ export default function AdminSettings({ settings }: Props) {
                                         className="rounded-lg text-xs h-8"
                                     >
                                         {isTesting ? (
-                                            <RotateCw className="w-3.5 h-3.5 animate-spin mr-1.5 text-purple-600" />
+                                            <RotateCw className="w-3.5 h-3.5 animate-spin mr-1.5 text-[#635bff]" />
                                         ) : (
                                             <Zap className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
                                         )}
@@ -213,7 +213,7 @@ export default function AdminSettings({ settings }: Props) {
                                         type="submit"
                                         size="sm"
                                         disabled={isSaving}
-                                        className="rounded-lg text-xs h-8 bg-purple-600 hover:bg-purple-700 text-white"
+                                        className="rounded-lg text-xs h-8 bg-[#635bff] hover:bg-[#5465ff] text-white"
                                     >
                                         <Save className="w-3.5 h-3.5 mr-1.5" />
                                         <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
@@ -271,7 +271,7 @@ export default function AdminSettings({ settings }: Props) {
                                                     onClick={() => handleFieldChange('default_model', m)}
                                                     className={`text-[10px] font-mono px-2 py-0.5 rounded-md border transition-colors ${
                                                         currentForm.default_model === m
-                                                            ? 'bg-purple-100 dark:bg-purple-950/60 border-purple-400 text-purple-700 dark:text-purple-300'
+                                                            ? 'bg-[#635bff]/10 dark:bg-[#635bff]/20 border-[#788bff] text-[#635bff] dark:text-[#9bb1ff]'
                                                             : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-400'
                                                     }`}
                                                 >
@@ -301,7 +301,7 @@ export default function AdminSettings({ settings }: Props) {
                                 <div className="space-y-1.5">
                                     <div className="flex items-center justify-between text-xs">
                                         <Label className="font-semibold text-slate-800 dark:text-slate-200">Temperature</Label>
-                                        <span className="font-mono text-purple-600">{currentForm.temperature}</span>
+                                        <span className="font-mono text-[#635bff]">{currentForm.temperature}</span>
                                     </div>
                                     <input
                                         type="range"
@@ -310,7 +310,7 @@ export default function AdminSettings({ settings }: Props) {
                                         step="0.05"
                                         value={currentForm.temperature}
                                         onChange={(e) => handleFieldChange('temperature', parseFloat(e.target.value))}
-                                        className="w-full accent-purple-600"
+                                        className="w-full accent-[#635bff]"
                                     />
                                     <p className="text-[10px] text-slate-400">Lower for analytical precision, higher for creativity.</p>
                                 </div>
@@ -338,7 +338,7 @@ export default function AdminSettings({ settings }: Props) {
                                     value={currentForm.system_prompt}
                                     onChange={(e) => handleFieldChange('system_prompt', e.target.value)}
                                     placeholder="Enter additional directives to prepend for this model..."
-                                    className="w-full rounded-lg text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-purple-500"
+                                    className="w-full rounded-lg text-xs p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-[#635bff]"
                                 />
                             </div>
                         </form>

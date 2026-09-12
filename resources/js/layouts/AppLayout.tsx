@@ -70,14 +70,14 @@ export default function AppLayout({ children, title = 'Dynime AI', fullWidth = f
                     {/* Left: Brand / Logo */}
                     <div className="flex items-center gap-6">
                         <Link href="/chat" className="flex items-center gap-2.5 group">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-500 flex items-center justify-center shadow-md shadow-purple-500/20 group-hover:scale-105 transition-transform duration-200">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#5465ff] via-[#635bff] to-[#788bff] flex items-center justify-center shadow-md shadow-[#635bff]/20 group-hover:scale-105 transition-transform duration-200">
                                 <Sparkles className="w-4 h-4 text-white" />
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="font-heading font-bold text-lg tracking-tight bg-gradient-to-r from-slate-900 via-purple-950 to-purple-800 dark:from-white dark:via-purple-200 dark:to-purple-400 bg-clip-text text-transparent">
+                                <span className="font-heading font-bold text-lg tracking-tight bg-gradient-to-r from-slate-900 via-neutral-900 to-[#635bff] dark:from-white dark:via-[#bfd7ff] dark:to-[#788bff] bg-clip-text text-transparent">
                                     Dynime AI
                                 </span>
-                                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/50 dark:border-purple-800/40">
+                                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-[#635bff]/10 dark:bg-[#635bff]/20 text-[#635bff] dark:text-[#9bb1ff] border border-[#635bff]/25 dark:border-[#635bff]/30">
                                     Studio
                                 </span>
                             </div>
@@ -118,7 +118,7 @@ export default function AppLayout({ children, title = 'Dynime AI', fullWidth = f
                             href="https://account.dynime.com"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-300 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors"
+                            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-500 hover:text-[#635bff] dark:text-slate-400 dark:hover:text-[#9bb1ff] rounded-lg hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors"
                         >
                             <span>Account Center</span>
                             <ExternalLink className="w-3 h-3 opacity-60" />
@@ -146,7 +146,7 @@ export default function AppLayout({ children, title = 'Dynime AI', fullWidth = f
                                                 className="w-7 h-7 rounded-md object-cover border border-slate-200 dark:border-slate-700"
                                             />
                                         ) : (
-                                            <div className="w-7 h-7 rounded-md bg-purple-600 text-white flex items-center justify-center text-xs font-semibold">
+                                            <div className="w-7 h-7 rounded-md bg-[#635bff] text-white flex items-center justify-center text-xs font-semibold">
                                                 {user.name?.charAt(0)?.toUpperCase() || 'U'}
                                             </div>
                                         )}
@@ -167,13 +167,13 @@ export default function AppLayout({ children, title = 'Dynime AI', fullWidth = f
                                         <>
                                             <DropdownMenuItem asChild>
                                                 <Link href="/admin" className="cursor-pointer flex items-center gap-2 text-xs">
-                                                    <Shield className="w-3.5 h-3.5 text-purple-600" />
+                                                    <Shield className="w-3.5 h-3.5 text-[#635bff]" />
                                                     <span>Admin Dashboard</span>
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem asChild>
                                                 <Link href="/admin/settings" className="cursor-pointer flex items-center gap-2 text-xs">
-                                                    <Settings className="w-3.5 h-3.5 text-purple-600" />
+                                                    <Settings className="w-3.5 h-3.5 text-[#635bff]" />
                                                     <span>AI Providers Settings</span>
                                                 </Link>
                                             </DropdownMenuItem>
@@ -191,7 +191,7 @@ export default function AppLayout({ children, title = 'Dynime AI', fullWidth = f
                             </DropdownMenu>
                         ) : (
                             <Link href="/login">
-                                <Button size="sm" className="rounded-lg text-xs bg-purple-600 hover:bg-purple-700 text-white">
+                                <Button size="sm" className="rounded-lg text-xs bg-[#635bff] hover:bg-[#5465ff] text-white">
                                     Sign In
                                 </Button>
                             </Link>

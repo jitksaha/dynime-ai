@@ -104,7 +104,7 @@ export default function AdminIndex({ settings: initialSettings, stats, recent_lo
                             <h1 className="font-heading text-xl font-bold text-slate-900 dark:text-white">
                                 AI Orchestration & Engine Management
                             </h1>
-                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#635bff]/10 dark:bg-[#635bff]/20 text-[#635bff] dark:text-[#9bb1ff]">
                                 Enterprise Admin
                             </span>
                         </div>
@@ -114,7 +114,7 @@ export default function AdminIndex({ settings: initialSettings, stats, recent_lo
                     </div>
 
                     <Link href="/admin/settings">
-                        <Button className="rounded-lg text-xs bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2">
+                        <Button className="rounded-lg text-xs bg-[#635bff] hover:bg-[#5465ff] text-white flex items-center gap-2">
                             <Sliders className="w-3.5 h-3.5" />
                             <span>Configure API Keys & Models</span>
                         </Button>
@@ -126,7 +126,7 @@ export default function AdminIndex({ settings: initialSettings, stats, recent_lo
                     <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-slate-500">Active Providers</span>
-                            <Cpu className="w-4 h-4 text-purple-600" />
+                            <Cpu className="w-4 h-4 text-[#635bff]" />
                         </div>
                         <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">
                             {settings.filter((s) => s.is_active).length} / {settings.length}
@@ -179,13 +179,13 @@ export default function AdminIndex({ settings: initialSettings, stats, recent_lo
                                 key={item.id}
                                 className={`p-4 rounded-xl border transition-all ${
                                     item.is_active
-                                        ? 'border-purple-200 dark:border-purple-900/40 bg-white dark:bg-slate-900 shadow-sm'
+                                        ? 'border-[#635bff]/25 dark:border-[#635bff]/30 bg-white dark:bg-slate-900 shadow-sm'
                                         : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 opacity-75'
                                 }`}
                             >
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
-                                        <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-xs">
+                                        <div className="w-7 h-7 rounded-lg bg-[#635bff]/10 dark:bg-[#635bff]/20 text-[#635bff] dark:text-[#9bb1ff] flex items-center justify-center font-bold text-xs">
                                             {item.display_name.charAt(0)}
                                         </div>
                                         <div>
@@ -201,7 +201,7 @@ export default function AdminIndex({ settings: initialSettings, stats, recent_lo
                                         type="button"
                                         onClick={() => handleToggle(item.id)}
                                         className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                            item.is_active ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-700'
+                                            item.is_active ? 'bg-[#635bff]' : 'bg-slate-300 dark:bg-slate-700'
                                         }`}
                                     >
                                         <span
@@ -239,7 +239,7 @@ export default function AdminIndex({ settings: initialSettings, stats, recent_lo
                                         className="flex-1 rounded-lg text-xs h-7 border-slate-200 dark:border-slate-800"
                                     >
                                         {testingId === item.id ? (
-                                            <RotateCw className="w-3 h-3 animate-spin mr-1 text-purple-600" />
+                                            <RotateCw className="w-3 h-3 animate-spin mr-1 text-[#635bff]" />
                                         ) : (
                                             <Zap className="w-3 h-3 mr-1 text-amber-500" />
                                         )}
@@ -250,7 +250,7 @@ export default function AdminIndex({ settings: initialSettings, stats, recent_lo
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="rounded-lg text-xs h-7 px-2 text-slate-500 hover:text-purple-600"
+                                            className="rounded-lg text-xs h-7 px-2 text-slate-500 hover:text-[#635bff]"
                                             title="Edit Provider"
                                         >
                                             <Sliders className="w-3.5 h-3.5" />
@@ -303,7 +303,7 @@ export default function AdminIndex({ settings: initialSettings, stats, recent_lo
                                                 {log.user?.name || 'User'}
                                             </td>
                                             <td className="p-3 whitespace-nowrap">
-                                                <span className="font-mono text-purple-600 dark:text-purple-400">
+                                                <span className="font-mono text-[#635bff] dark:text-[#788bff]">
                                                     {log.provider || 'orchestrator'}
                                                 </span>
                                                 <span className="text-[10px] text-slate-400 ml-1">
