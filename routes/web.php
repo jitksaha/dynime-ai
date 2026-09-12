@@ -23,7 +23,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', fn() => redirect()->route('chat.index'));
 
     // Chat Interface & Actions
-    Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/{uuid?}', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/api/conversations', [ChatController::class, 'getConversations'])->name('chat.conversations');
     Route::post('/api/conversations', [ChatController::class, 'storeConversation'])->name('chat.conversations.store');
     Route::get('/api/conversations/{uuid}', [ChatController::class, 'showConversation'])->name('chat.conversations.show');

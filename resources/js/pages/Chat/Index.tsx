@@ -574,9 +574,59 @@ export default function ChatIndex({
         user?.avatar ||
         (user?.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7c3aed&color=fff` : null);
 
+    const updateChatUrl = (uuid?: string | null, replace: boolean = false) => {
+        try {
+            if (typeof window === 'undefined') return;
+            const targetUrl = uuid ? `/chat/${uuid}` : '/chat';
+            if (window.location.pathname !== targetUrl) {
+                if (replace) {
+                    window.history.replaceState({ convUuid: uuid }, '', targetUrl);
+                } else {
+                    window.history.pushState({ convUuid: uuid }, '', targetUrl);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to update URL:', err);
+        }
+    };
+
+    // Synchronize browser address bar with the active conversation
+    useEffect(() => {
+        if (activeConv?.uuid) {
+            updateChatUrl(activeConv.uuid, true);
+        }
+    }, [activeConv?.uuid]);
+
+    // Handle browser Back and Forward navigation smoothly
+    useEffect(() => {
+        const handlePopState = async () => {
+            const match = window.location.pathname.match(/\/chat\/([a-zA-Z0-9_-]+)/);
+            const targetUuid = match ? match[1] : null;
+            if (targetUuid) {
+                if (targetUuid !== activeConv?.uuid) {
+                    try {
+                        const res = await axios.get(`/api/conversations/${targetUuid}`);
+                        setActiveConv(res.data);
+                        setMessages(res.data.messages || []);
+                        setSelectedCapability(res.data.capability_profile || 'auto');
+                    } catch (err) {
+                        console.error('Failed to load conversation on popstate:', err);
+                    }
+                }
+            } else if (window.location.pathname === '/chat') {
+                setActiveConv(null);
+                setMessages([]);
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [activeConv?.uuid]);
+
     const handleSelectConversation = async (conv: Conversation) => {
         if (activeConv?.uuid === conv.uuid) return;
         try {
+            updateChatUrl(conv.uuid, false);
             const res = await axios.get(`/api/conversations/${conv.uuid}`);
             setActiveConv(res.data);
             setMessages(res.data.messages || []);
@@ -598,6 +648,7 @@ export default function ChatIndex({
             setInputValue('');
             setAttachments([]);
             setPreviewDoc(null);
+            updateChatUrl(newConv.uuid, false);
             if (textareaRef.current) textareaRef.current.focus();
         } catch (e) {
             setActiveConv(null);
@@ -605,6 +656,7 @@ export default function ChatIndex({
             setInputValue('');
             setAttachments([]);
             setPreviewDoc(null);
+            updateChatUrl(null, false);
         }
     };
 
@@ -660,8 +712,10 @@ export default function ChatIndex({
             const updated = conversations.filter((c) => c.uuid !== conv.uuid);
             setConversations(updated);
             if (activeConv?.uuid === conv.uuid) {
-                setActiveConv(updated[0] || null);
-                setMessages(updated[0]?.messages || []);
+                const nextConv = updated[0] || null;
+                setActiveConv(nextConv);
+                setMessages(nextConv?.messages || []);
+                updateChatUrl(nextConv?.uuid || null, true);
             }
             toast.success('Discussion deleted.');
         } catch (e) {
@@ -944,10 +998,13 @@ export default function ChatIndex({
                 conv = res.data;
                 setConversations([conv!, ...conversations]);
                 setActiveConv(conv);
+                updateChatUrl(conv.uuid, false);
             } catch (e) {
                 toast.error('Could not initiate conversation session.');
                 return;
             }
+        } else if (conv.uuid) {
+            updateChatUrl(conv.uuid, true);
         }
 
         const optimisticUserMessage: Message = {
@@ -3722,12 +3779,12 @@ export default function ChatIndex({
                                 <input
                                     type="text"
                                     readOnly
-                                    value={typeof window !== 'undefined' ? `${window.location.origin}/chat?c=${activeConv?.uuid || ''}` : ''}
+                                    value={typeof window !== 'undefined' ? `${window.location.origin}/chat/${activeConv?.uuid || ''}` : ''}
                                     className="flex-1 px-3 py-2 rounded-xl bg-neutral-100 dark:bg-black/40 border border-neutral-200 dark:border-neutral-800 text-xs font-mono text-neutral-700 dark:text-neutral-300 select-all"
                                 />
                                 <button
                                     onClick={() => {
-                                        const url = `${window.location.origin}/chat?c=${activeConv?.uuid || ''}`;
+                                        const url = `${window.location.origin}/chat/${activeConv?.uuid || ''}`;
                                         navigator.clipboard?.writeText(url);
                                         toast.success('Public link copied to clipboard!');
                                     }}
@@ -3744,7 +3801,7 @@ export default function ChatIndex({
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => {
-                                            const url = encodeURIComponent(`${window.location.origin}/chat?c=${activeConv?.uuid || ''}`);
+                                            const url = encodeURIComponent(`${window.location.origin}/chat/${activeConv?.uuid || ''}`);
                                             const text = encodeURIComponent(`Check out this AI discussion on Dynime: ${activeConv?.title || ''}`);
                                             window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
                                         }}
@@ -3754,7 +3811,7 @@ export default function ChatIndex({
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const url = encodeURIComponent(`${window.location.origin}/chat?c=${activeConv?.uuid || ''}`);
+                                            const url = encodeURIComponent(`${window.location.origin}/chat/${activeConv?.uuid || ''}`);
                                             window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
                                         }}
                                         className="px-2.5 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors text-[11px] font-medium cursor-pointer"
@@ -3763,7 +3820,7 @@ export default function ChatIndex({
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const url = encodeURIComponent(`${window.location.origin}/chat?c=${activeConv?.uuid || ''}`);
+                                            const url = encodeURIComponent(`${window.location.origin}/chat/${activeConv?.uuid || ''}`);
                                             const text = encodeURIComponent(`Check out this Dynime AI discussion: ${activeConv?.title || ''} - ${url}`);
                                             window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
                                         }}

@@ -16,7 +16,7 @@ use App\Services\DComposer\DComposer;
 
 class ChatController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, $uuid = null)
     {
         $user = Auth::user();
 
@@ -27,15 +27,15 @@ class ChatController extends Controller
             ->get(['id', 'uuid', 'title', 'capability_profile', 'is_pinned', 'updated_at']);
 
         $activeConv = null;
-        $uuid = $request->query('c');
-        if ($uuid) {
+        $targetUuid = $uuid ?: $request->query('c');
+        if ($targetUuid) {
             $activeConv = AiConversation::with('messages')
                 ->where('user_id', $user->id)
-                ->where('uuid', $uuid)
+                ->where('uuid', $targetUuid)
                 ->first();
         }
 
-        if (!$activeConv && $conversations->isNotEmpty()) {
+        if (!$activeConv && !$uuid && $conversations->isNotEmpty()) {
             $activeConv = AiConversation::with('messages')
                 ->where('user_id', $user->id)
                 ->where('id', $conversations->first()->id)
