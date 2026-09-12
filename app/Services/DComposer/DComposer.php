@@ -95,7 +95,7 @@ class DComposer
                     $setting,
                     $messages,
                     $systemPrompt,
-                    $capability
+                    ['capability' => $capability]
                 );
 
                 if ($compResult['success']) {
@@ -123,28 +123,23 @@ class DComposer
         $latencyMs = (int)((microtime(true) - $startTime) * 1000);
 
         // 5. Post-Process & Clean Response
-        $cleanContent = OutputSanitizer::cleanse($responseContent);
+        $cleanContent = SecurityGuard::sanitizeOutput($responseContent);
 
         // 6. Record Audit Log
-        AiAuditLog::create([
-            'user_id' => $user->id,
-            'action' => 'chat.completion',
-            'provider' => $usedProvider ?? $primarySetting->provider,
-            'model' => $usedModel ?? $primarySetting->default_model,
-            'capability_profile' => $capability,
-            'tokens_used' => ($tokensIn ?? 0) + ($tokensOut ?? 0),
-            'cost_estimated' => CostTracker::estimate($usedModel, $tokensIn ?? 0, $tokensOut ?? 0),
-            'latency_ms' => $latencyMs,
-            'status' => $responseContent !== null ? 'success' : 'failed',
-            'metadata' => [
-                'conversation_id' => $conversation->id,
-                'requested_model' => $requestedModel,
-                'emulated_model' => $emulatedModel,
-                'skills' => $skills,
-                'web_search' => $webSearch,
-                'error' => $lastError,
-            ],
-        ]);
+        try {
+            AiAuditLog::create([
+                'user_id' => $user->id,
+                'provider' => $displayProvider ?? $usedProvider ?? $primarySetting->provider,
+                'model' => $displayModel ?? $usedModel ?? $primarySetting->default_model,
+                'capability' => $capability,
+                'tokens_used' => ($tokensIn ?? 0) + ($tokensOut ?? 0),
+                'latency_ms' => $latencyMs,
+                'status' => $responseContent !== null ? 'success' : 'failed',
+                'error_message' => $lastError,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning("AiAuditLog error: " . $e->getMessage());
+        }
 
         // 7. Persist Assistant Message
         $displayModel = $emulatedModel ?: ($usedModel ?? $primarySetting->default_model);
