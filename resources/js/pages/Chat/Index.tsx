@@ -65,6 +65,9 @@ import {
     Table,
     ArrowUpRight,
     Settings,
+    HelpCircle,
+    ArrowUpCircle,
+    Info,
 } from 'lucide-react';
 import {
     DropdownMenu,
