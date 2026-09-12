@@ -64,6 +64,7 @@ import {
     ChevronRight,
     Table,
     ArrowUpRight,
+    Settings,
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -199,6 +200,110 @@ const DEFAULT_CONNECTORS: ConnectorItem[] = [
     { id: 'github_enterprise', name: 'GitHub Enterprise', icon: 'Code2', status: 'needs_config', badge: 'Ready to Connect', description: 'Repository sync and pull requests' },
 ];
 
+
+interface LanguageItem {
+    code: string;
+    name: string;
+    nativeName: string;
+    flag: string;
+}
+
+const LANGUAGES: LanguageItem[] = [
+    { code: 'en', name: 'English', nativeName: 'English (US)', flag: '🇺🇸' },
+    { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', flag: '🇧🇩' },
+    { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳' },
+    { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
+    { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
+    { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪' },
+    { code: 'ar', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦' },
+    { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' },
+    { code: 'zh', name: 'Chinese', nativeName: '中文', flag: '🇨🇳' },
+];
+
+const UI_TRANSLATIONS: Record<string, Record<string, string>> = {
+    en: {
+        newChat: 'New Chat',
+        myDynime: 'My Dynime',
+        scheduledTasks: 'Scheduled Tasks',
+        swarm: 'Swarm',
+        slides: 'Slides',
+        deepResearch: 'Deep Research',
+        websites: 'Websites',
+        docs: 'Docs',
+        sheets: 'Sheets',
+        design: 'Design',
+        dynimeWork: 'Dynime Work',
+        dynimeCode: 'Dynime Code',
+        exploreInspiration: 'Explore inspiration',
+        settings: 'Settings',
+        language: 'Language',
+        appearance: 'Appearance',
+        getHelp: 'Get help',
+        upgradePlan: 'Upgrade plan',
+        getApps: 'Get apps and extensions',
+        learnMore: 'Learn more',
+        logOut: 'Log out',
+        privacyPolicy: 'Privacy Policy',
+        terms: 'Terms of Service',
+        careers: 'Careers',
+        about: 'About Dynime',
+    },
+    bn: {
+        newChat: 'নতুন চ্যাট',
+        myDynime: 'আমার ডাইনিম',
+        scheduledTasks: 'শিডিউলড টাস্ক',
+        swarm: 'সোয়ার্ম',
+        slides: 'স্লাইড',
+        deepResearch: 'ডিপ রিসার্চ',
+        websites: 'ওয়েবসাইট',
+        docs: 'ডকুমেন্টস',
+        sheets: 'শীটস',
+        design: 'ডিজাইন',
+        dynimeWork: 'ডাইনিম ওয়ার্ক',
+        dynimeCode: 'ডাইনিম কোড',
+        exploreInspiration: 'অনুপ্রেরণা এক্সপ্লোর করুন',
+        settings: 'সেটিংস',
+        language: 'ভাষা',
+        appearance: 'অ্যাপিয়ারেন্স',
+        getHelp: 'সাহায্য নিন',
+        upgradePlan: 'প্ল্যান আপগ্রেড করুন',
+        getApps: 'অ্যাপ ও এক্সটেনশন',
+        learnMore: 'আরও জানুন',
+        logOut: 'লগ আউট',
+        privacyPolicy: 'গোপনীয়তা নীতি',
+        terms: 'সেবার শর্তাবলী',
+        careers: 'ক্যারিয়ার',
+        about: 'ডাইনিম সম্পর্কে',
+    },
+    hi: {
+        newChat: 'नई बातचीत',
+        myDynime: 'माई डाइनीम',
+        scheduledTasks: 'शेड्यूल किए गए कार्य',
+        swarm: 'स्वॉर्म',
+        slides: 'स्लाइड्स',
+        deepResearch: 'डीप रिसर्च',
+        websites: 'वेबसाइट्स',
+        docs: 'दस्तावेज़',
+        sheets: 'शीट्स',
+        design: 'डिज़ाइन',
+        dynimeWork: 'डाइनीम वर्क',
+        dynimeCode: 'डाइनीम कोड',
+        exploreInspiration: 'प्रेरणा देखें',
+        settings: 'सेटिंग्स',
+        language: 'भाषा',
+        appearance: 'दिखावट',
+        getHelp: 'सहायता प्राप्त करें',
+        upgradePlan: 'प्लान अपग्रेड करें',
+        getApps: 'ऐप्स और एक्सटेंशन',
+        learnMore: 'अधिक जानें',
+        logOut: 'लॉग आउट',
+        privacyPolicy: 'गोपनीयता नीति',
+        terms: 'सेवा की शर्तें',
+        careers: 'करियर',
+        about: 'डाइनीम के बारे में',
+    },
+};
+
 export default function ChatIndex({
     conversations: initialConversations = [],
     initial_conversation = null,
@@ -215,7 +320,68 @@ export default function ChatIndex({
     const user = auth?.user;
 
     // Theme state: default light mode
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
+    // Language & Translation State
+    const [currentLanguage, setCurrentLanguage] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('dynime_lang') || 'en';
+        }
+        return 'en';
+    });
+    const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState<boolean>(false);
+    const [isLearnMoreOpen, setIsLearnMoreOpen] = useState<boolean>(false);
+    const [isAppsModalOpen, setIsAppsModalOpen] = useState<boolean>(false);
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
+    const [isLearnMoreModalOpen, setIsLearnMoreModalOpen] = useState<boolean>(false);
+    const [learnMoreActiveTab, setLearnMoreActiveTab] = useState<'policy' | 'terms' | 'careers' | 'about'>('policy');
+
+    const handleSelectLanguage = (lang: LanguageItem) => {
+        setCurrentLanguage(lang.code);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('dynime_lang', lang.code);
+        }
+        setIsLanguageMenuOpen(false);
+        toast.success(`Language changed to ${lang.nativeName} (${lang.name})`);
+    };
+
+    const t = (key: string): string => {
+        return UI_TRANSLATIONS[currentLanguage]?.[key] || UI_TRANSLATIONS['en']?.[key] || key;
+    };
+
+    const handleSetTheme = (newTheme: 'light' | 'dark' | 'system') => {
+        setTheme(newTheme as any);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('dynime_theme', newTheme);
+            if (newTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else if (newTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (prefersDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+        }
+        toast.success(`Theme switched to ${newTheme}`);
+    };
+
+    const handleOpenLearnTopic = (topic: 'policy' | 'terms' | 'careers' | 'about') => {
+        setLearnMoreActiveTab(topic);
+        setIsLearnMoreModalOpen(true);
+    };
+
+    const userInitials = (user?.name || 'Dynime User')
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+
+    const isProUser = (userPlan && userPlan.toLowerCase() !== 'free') || (current_plan_slug && current_plan_slug !== 'free');
+
 
     const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
     const [activeConv, setActiveConv] = useState<Conversation | null>(initial_conversation);
@@ -1090,24 +1256,22 @@ export default function ChatIndex({
                             ⌘ K
                         </kbd>
                     </button>
-                </div>
-
-                {/* Kimi Menu Navigation List matching Screenshot 1 */}
+                </div>                {/* Kimi Menu Navigation List with Lottie-Style Animated Icons & Multi-Language Support */}
                 <div className="px-2 py-0.5 space-y-0.5 text-xs text-neutral-600 dark:text-neutral-300 flex-shrink-0">
                     <button
                         onClick={handleNewChat}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Sparkles className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff]" />
-                        <span className="font-medium">My Dynime</span>
+                        <Sparkles className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff] lottie-icon group-hover:rotate-12 group-hover:scale-125" />
+                        <span className="font-medium">{t('myDynime')}</span>
                     </button>
 
                     <button
                         onClick={() => toast.info('Scheduled automated agent tasks active.')}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Clock className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>Scheduled Tasks</span>
+                        <Clock className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:rotate-180 group-hover:text-amber-500" />
+                        <span>{t('scheduledTasks')}</span>
                     </button>
 
                     <button
@@ -1115,10 +1279,10 @@ export default function ChatIndex({
                             setSelectedCapability('auto');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Network className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>Swarm</span>
+                        <Network className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:scale-125 group-hover:text-indigo-500" />
+                        <span>{t('swarm')}</span>
                     </button>
 
                     <button
@@ -1126,10 +1290,10 @@ export default function ChatIndex({
                             setSelectedCapability('creative');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Presentation className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>Slides</span>
+                        <Presentation className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:-rotate-12 group-hover:scale-125 group-hover:text-cyan-500" />
+                        <span>{t('slides')}</span>
                     </button>
 
                     <button
@@ -1137,10 +1301,10 @@ export default function ChatIndex({
                             setSelectedCapability('research');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Compass className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>Deep Research</span>
+                        <Compass className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:rotate-45 group-hover:scale-125 group-hover:text-violet-500" />
+                        <span>{t('deepResearch')}</span>
                     </button>
 
                     <button
@@ -1148,10 +1312,10 @@ export default function ChatIndex({
                             setSelectedCapability('fast');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Globe className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>Websites</span>
+                        <Globe className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:rotate-180 group-hover:text-emerald-500" />
+                        <span>{t('websites')}</span>
                     </button>
 
                     <button
@@ -1159,10 +1323,10 @@ export default function ChatIndex({
                             setSelectedCapability('vision');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <FileText className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>Docs</span>
+                        <FileText className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:-translate-y-0.5 group-hover:scale-110 group-hover:text-blue-500" />
+                        <span>{t('docs')}</span>
                     </button>
 
                     <button
@@ -1170,10 +1334,10 @@ export default function ChatIndex({
                             setSelectedCapability('coding');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>Sheets</span>
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:scale-125 group-hover:text-emerald-500" />
+                        <span>{t('sheets')}</span>
                     </button>
 
                     <button
@@ -1181,10 +1345,10 @@ export default function ChatIndex({
                             setSelectedCapability('deep_thinking');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Palette className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>Design</span>
+                        <Palette className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:rotate-180 group-hover:text-fuchsia-500" />
+                        <span>{t('design')}</span>
                     </button>
 
                     <button
@@ -1192,10 +1356,10 @@ export default function ChatIndex({
                             setSelectedCapability('auto');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Briefcase className="w-3.5 h-3.5 text-neutral-400" />
-                        <span>Dynime Work</span>
+                        <Briefcase className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:-translate-y-1 group-hover:text-amber-500" />
+                        <span>{t('dynimeWork')}</span>
                     </button>
 
                     <button
@@ -1203,10 +1367,10 @@ export default function ChatIndex({
                             setSelectedCapability('coding');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Code2 className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff]" />
-                        <span>Dynime Code</span>
+                        <Code2 className="w-3.5 h-3.5 text-[#635bff] dark:text-[#788bff] lottie-icon group-hover:scale-125" />
+                        <span>{t('dynimeCode')}</span>
                     </button>
 
                     <button
@@ -1214,9 +1378,9 @@ export default function ChatIndex({
                             setSelectedCapability('deep_thinking');
                             handleNewChat();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-colors"
+                        className="group w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-neutral-200/50 dark:hover:bg-white/[0.05] hover:text-neutral-900 dark:hover:text-white transition-all cursor-pointer"
                     >
-                        <Bot className="w-3.5 h-3.5 text-neutral-400" />
+                        <Bot className="w-3.5 h-3.5 text-neutral-400 lottie-icon group-hover:rotate-12 group-hover:scale-125 group-hover:text-rose-500" />
                         <span>Dynime Claw</span>
                     </button>
                 </div>
@@ -1325,49 +1489,332 @@ export default function ChatIndex({
                     )}
                 </div>
 
-                {/* Sidebar Bottom Profile Bar matching Screenshot 1 */}
-                <div className="p-3 border-t border-neutral-200/80 dark:border-white/[0.06] bg-[#f0f0f3] dark:bg-[#0f0f13] flex-shrink-0">
+                {/* Sidebar Bottom Profile Bar matching Screenshot 1, 2, 3 with Full Interactive Dropdown */}
+                <div className="p-2.5 border-t border-neutral-200/80 dark:border-white/[0.06] bg-[#f0f0f3] dark:bg-[#0f0f13] flex-shrink-0">
                     {user ? (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 min-w-0 pr-1">
-                                <div className="relative flex-shrink-0">
-                                    <img
-                                        src={avatarSrc || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7c3aed&color=fff`}
-                                        alt={user.name}
-                                        className="w-7 h-7 rounded-full object-cover border border-neutral-200 dark:border-white/10 shadow-xs"
-                                    />
-                                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0f0f13]" />
-                                </div>
-                                <div className="flex flex-col truncate">
-                                    <span className="text-xs font-semibold text-neutral-900 dark:text-white truncate max-w-[90px]">
-                                        {user.name}
-                                    </span>
-                                    <span className="text-[10px] text-neutral-400 capitalize">
-                                        {userPlan} plan
-                                    </span>
-                                </div>
-                            </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <div
+                                    className="w-full flex items-center justify-between p-1.5 rounded-xl hover:bg-neutral-200/70 dark:hover:bg-white/[0.08] transition-all cursor-pointer group select-none"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0 pr-1 flex-1">
+                                        <div className="relative flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#635bff] to-[#5465ff] text-white flex items-center justify-center text-xs font-bold shadow-xs group-hover:scale-105 transition-transform">
+                                                {userInitials}
+                                            </div>
+                                            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0f0f13]" />
+                                        </div>
+                                        <div className="flex flex-col min-w-0 flex-1 text-left">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-xs font-semibold text-neutral-900 dark:text-white truncate max-w-[105px]">
+                                                    {user.name}
+                                                </span>
+                                                {isProUser && (
+                                                    <span className="px-1.5 py-0.2 rounded text-[8.5px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 via-[#635bff] to-[#5465ff] text-white shadow-xs flex items-center gap-0.5 flex-shrink-0">
+                                                        <Sparkles className="w-2 h-2 fill-white" /> PRO
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-1 text-[10px] text-neutral-400 capitalize">
+                                                <span>{userPlan}</span>
+                                                <ChevronDown className="w-3 h-3 text-neutral-400 group-hover:text-neutral-700 dark:group-hover:text-neutral-200 transition-transform group-hover:translate-y-0.5" />
+                                            </div>
+                                        </div>
+                                    </div>
 
-                            <div className="flex items-center gap-1.5">
-                                {/* Upgrade Button Pill matching Screenshot 1 */}
-                                <button
-                                    type="button"
+                                    <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                        {!isProUser ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsPricingModalOpen(true)}
+                                                className="px-2.5 py-1 rounded-full text-[10.5px] font-semibold bg-[#635bff]/15 hover:bg-[#635bff]/25 text-[#635bff] dark:text-[#9bb1ff] border border-[#635bff]/25 transition-all shadow-2xs hover:scale-105 active:scale-95 cursor-pointer"
+                                            >
+                                                Upgrade
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsPricingModalOpen(true)}
+                                                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 transition-colors cursor-pointer"
+                                            >
+                                                Manage
+                                            </button>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsAppsModalOpen(true)}
+                                            className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-300/60 dark:hover:bg-white/[0.08] transition-colors group/dl cursor-pointer"
+                                            title="Get apps and extensions"
+                                        >
+                                            <Download className="w-3.5 h-3.5 group-hover/dl:translate-y-0.5 transition-transform" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </DropdownMenuTrigger>
+
+                            {/* DROPDOWN MENU MATCHING SCREENSHOT 3 PERFECTLY */}
+                            <DropdownMenuContent
+                                align="start"
+                                side="top"
+                                sideOffset={8}
+                                className="w-72 bg-[#16161a] text-neutral-200 border border-neutral-800 shadow-2xl rounded-2xl p-2 font-sans animate-in fade-in-50 zoom-in-95 duration-150 z-[120]"
+                            >
+                                {/* User email header */}
+                                <div className="px-3 py-2.5 border-b border-neutral-800/80 mb-1">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs font-medium text-neutral-300 truncate max-w-[190px]" title={user.email}>
+                                            {user.email}
+                                        </p>
+                                        {isProUser ? (
+                                            <span className="px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-[#635bff] text-white">
+                                                PRO
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] text-neutral-500 uppercase font-mono">
+                                                Free
+                                            </span>
+                                        )}
+                                    </div>
+                                    <a
+                                        href="https://account.dynime.com"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-[#9bb1ff] hover:text-white transition-colors group/acc"
+                                    >
+                                        <UserIcon className="w-3 h-3 text-[#635bff]" />
+                                        <span>Dynime Account Center</span>
+                                        <ExternalLink className="w-2.5 h-2.5 opacity-70 group-hover/acc:translate-x-0.5 transition-transform" />
+                                    </a>
+                                </div>
+
+                                {/* Settings (⇧ ⌘ ,) */}
+                                <DropdownMenuItem
+                                    onClick={() => setIsSkillsModalOpen(true)}
+                                    className="group flex items-center justify-between px-3 py-2 rounded-xl text-xs text-neutral-300 hover:text-white hover:bg-white/[0.08] cursor-pointer transition-colors"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <Settings className="w-4 h-4 text-neutral-400 group-hover:text-white group-hover:rotate-90 transition-transform duration-500 ease-out" />
+                                        <span>{t('settings')}</span>
+                                    </div>
+                                    <span className="text-[10px] font-mono text-neutral-500">⇧ ⌘ ,</span>
+                                </DropdownMenuItem>
+
+                                {/* Language Switcher with Submenu */}
+                                <div className="px-3 py-2 rounded-xl text-xs text-neutral-300 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer group/lang">
+                                    <div
+                                        className="flex items-center justify-between"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsLanguageMenuOpen(!isLanguageMenuOpen);
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-2.5">
+                                            <Globe className="w-4 h-4 text-neutral-400 group-hover/lang:text-white group-hover/lang:rotate-180 transition-transform duration-700" />
+                                            <span>{t('language')}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-[11px] text-neutral-400">
+                                            <span>{LANGUAGES.find(l => l.code === currentLanguage)?.nativeName || 'English'}</span>
+                                            <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isLanguageMenuOpen ? 'rotate-90' : ''}`} />
+                                        </div>
+                                    </div>
+
+                                    {isLanguageMenuOpen && (
+                                        <div className="mt-2 p-1 rounded-xl bg-black/60 border border-white/10 space-y-0.5 max-h-48 overflow-y-auto animate-in fade-in duration-150">
+                                            {LANGUAGES.map((lang) => (
+                                                <div
+                                                    key={lang.code}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleSelectLanguage(lang);
+                                                    }}
+                                                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs cursor-pointer transition-colors ${
+                                                        currentLanguage === lang.code
+                                                            ? 'bg-[#635bff] text-white font-medium'
+                                                            : 'text-neutral-300 hover:bg-white/10 hover:text-white'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{lang.flag}</span>
+                                                        <span>{lang.nativeName}</span>
+                                                        <span className="text-[10px] text-neutral-400">({lang.name})</span>
+                                                    </div>
+                                                    {currentLanguage === lang.code && <Check className="w-3 h-3 text-white" />}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Appearance Switcher (Light, Dark, System) */}
+                                <div className="px-3 py-2 rounded-xl text-xs text-neutral-300 hover:text-white hover:bg-white/[0.08] transition-colors group/theme">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <div className="flex items-center gap-2.5">
+                                            <Palette className="w-4 h-4 text-neutral-400 group-hover/theme:text-white group-hover/theme:rotate-180 transition-transform duration-500" />
+                                            <span>{t('appearance')}</span>
+                                        </div>
+                                        <span className="text-[10px] text-neutral-400 capitalize">{theme}</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-black/50 border border-white/10 text-[10px]">
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSetTheme('light');
+                                            }}
+                                            className={`flex items-center justify-center gap-1 py-1 rounded-md transition-all ${
+                                                theme === 'light'
+                                                    ? 'bg-white text-black font-semibold shadow-xs'
+                                                    : 'text-neutral-400 hover:text-white'
+                                            }`}
+                                        >
+                                            <Sun className="w-3 h-3 text-amber-500" />
+                                            <span>Light</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSetTheme('dark');
+                                            }}
+                                            className={`flex items-center justify-center gap-1 py-1 rounded-md transition-all ${
+                                                theme === 'dark'
+                                                    ? 'bg-[#635bff] text-white font-semibold shadow-xs'
+                                                    : 'text-neutral-400 hover:text-white'
+                                            }`}
+                                        >
+                                            <Moon className="w-3 h-3 text-indigo-200" />
+                                            <span>Dark</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSetTheme('system');
+                                            }}
+                                            className={`flex items-center justify-center gap-1 py-1 rounded-md transition-all ${
+                                                theme === 'system'
+                                                    ? 'bg-neutral-700 text-white font-semibold shadow-xs'
+                                                    : 'text-neutral-400 hover:text-white'
+                                            }`}
+                                        >
+                                            <Laptop className="w-3 h-3" />
+                                            <span>System</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Get Help */}
+                                <DropdownMenuItem
+                                    onClick={() => setIsHelpModalOpen(true)}
+                                    className="group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-neutral-300 hover:text-white hover:bg-white/[0.08] cursor-pointer transition-colors"
+                                >
+                                    <HelpCircle className="w-4 h-4 text-neutral-400 group-hover:text-white group-hover:scale-110 group-hover:-translate-y-0.5 transition-all" />
+                                    <span>{t('getHelp')}</span>
+                                </DropdownMenuItem>
+
+                                <div className="my-1 border-t border-neutral-800" />
+
+                                {/* Upgrade Plan */}
+                                <DropdownMenuItem
                                     onClick={() => setIsPricingModalOpen(true)}
-                                    className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#635bff]/15 hover:bg-[#635bff]/25 text-[#635bff] dark:text-[#9bb1ff] border border-[#635bff]/20 transition-colors"
+                                    className="group flex items-center justify-between px-3 py-2 rounded-xl text-xs text-neutral-300 hover:text-white hover:bg-white/[0.08] cursor-pointer transition-colors"
                                 >
-                                    Upgrade
-                                </button>
+                                    <div className="flex items-center gap-2.5">
+                                        <ArrowUpCircle className="w-4 h-4 text-neutral-400 group-hover:text-[#635bff] group-hover:-translate-y-0.5 group-hover:scale-110 transition-all" />
+                                        <span>{t('upgradePlan')}</span>
+                                    </div>
+                                    <span className="text-[10px] text-[#9bb1ff] font-medium bg-[#635bff]/20 px-1.5 py-0.2 rounded border border-[#635bff]/30">
+                                        Plans
+                                    </span>
+                                </DropdownMenuItem>
 
-                                {/* Desktop / App Tray Button matching Screenshot 1 */}
-                                <button
-                                    onClick={() => toast.info('Dynime AI Web Studio is operating at peak performance.')}
-                                    className="p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-200/60 dark:hover:bg-white/[0.06] transition-colors"
-                                    title="Desktop App / Workspace Mode"
+                                {/* Get Apps & Extensions */}
+                                <DropdownMenuItem
+                                    onClick={() => setIsAppsModalOpen(true)}
+                                    className="group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-neutral-300 hover:text-white hover:bg-white/[0.08] cursor-pointer transition-colors"
                                 >
-                                    <Download className="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-                        </div>
+                                    <Download className="w-4 h-4 text-neutral-400 group-hover:text-white group-hover:translate-y-0.5 transition-transform" />
+                                    <span>{t('getApps')}</span>
+                                </DropdownMenuItem>
+
+                                {/* Learn More (with Hover Submenu: Policy, Careers, Terms, About) */}
+                                <div className="px-3 py-2 rounded-xl text-xs text-neutral-300 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer group/learn">
+                                    <div
+                                        className="flex items-center justify-between"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsLearnMoreOpen(!isLearnMoreOpen);
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-2.5">
+                                            <Info className="w-4 h-4 text-neutral-400 group-hover/learn:text-white group-hover/learn:scale-110 transition-transform" />
+                                            <span>{t('learnMore')}</span>
+                                        </div>
+                                        <ChevronRight className={`w-3.5 h-3.5 text-neutral-400 transition-transform ${isLearnMoreOpen ? 'rotate-90' : ''}`} />
+                                    </div>
+
+                                    {isLearnMoreOpen && (
+                                        <div className="mt-2 p-1 rounded-xl bg-black/60 border border-white/10 space-y-0.5 animate-in fade-in duration-150">
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenLearnTopic('policy');
+                                                }}
+                                                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+                                            >
+                                                <span>{t('privacyPolicy')}</span>
+                                                <ExternalLink className="w-3 h-3 opacity-50" />
+                                            </div>
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenLearnTopic('terms');
+                                                }}
+                                                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+                                            >
+                                                <span>{t('terms')}</span>
+                                                <ExternalLink className="w-3 h-3 opacity-50" />
+                                            </div>
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenLearnTopic('careers');
+                                                }}
+                                                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>{t('careers')}</span>
+                                                    <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 rounded">Hiring</span>
+                                                </div>
+                                                <ExternalLink className="w-3 h-3 opacity-50" />
+                                            </div>
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenLearnTopic('about');
+                                                }}
+                                                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+                                            >
+                                                <span>{t('about')}</span>
+                                                <ExternalLink className="w-3 h-3 opacity-50" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="my-1 border-t border-neutral-800" />
+
+                                {/* Log Out */}
+                                <DropdownMenuItem
+                                    onClick={() => router.post('/logout')}
+                                    className="group flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 cursor-pointer transition-colors"
+                                >
+                                    <LogOut className="w-4 h-4 text-rose-400 group-hover:translate-x-1 transition-transform" />
+                                    <span>{t('logOut')}</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     ) : (
                         <a
                             href={ssoLoginUrl}
@@ -2830,6 +3277,247 @@ export default function ChatIndex({
                         </div>
                     </aside>
                 )}
+
+            {/* LEARN MORE MODAL (POLICY, TERMS, CAREERS, ABOUT) */}
+            {isLearnMoreModalOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-[#15151a] border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden text-neutral-900 dark:text-neutral-100 animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 rounded-lg bg-[#635bff]/10 text-[#635bff] dark:text-[#9bb1ff]">
+                                    <Info className="w-4 h-4" />
+                                </div>
+                                <h3 className="font-semibold text-sm">Dynime AI Resource Center</h3>
+                            </div>
+                            <button
+                                onClick={() => setIsLearnMoreModalOpen(false)}
+                                className="p-1 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-neutral-200 dark:border-neutral-800 px-6 pt-2 gap-4 text-xs font-medium">
+                            <button
+                                onClick={() => setLearnMoreActiveTab('policy')}
+                                className={`pb-2.5 border-b-2 transition-colors ${
+                                    learnMoreActiveTab === 'policy'
+                                        ? 'border-[#635bff] text-[#635bff] dark:text-[#9bb1ff]'
+                                        : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                                }`}
+                            >
+                                Privacy Policy
+                            </button>
+                            <button
+                                onClick={() => setLearnMoreActiveTab('terms')}
+                                className={`pb-2.5 border-b-2 transition-colors ${
+                                    learnMoreActiveTab === 'terms'
+                                        ? 'border-[#635bff] text-[#635bff] dark:text-[#9bb1ff]'
+                                        : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                                }`}
+                            >
+                                Terms of Service
+                            </button>
+                            <button
+                                onClick={() => setLearnMoreActiveTab('careers')}
+                                className={`pb-2.5 border-b-2 transition-colors flex items-center gap-1.5 ${
+                                    learnMoreActiveTab === 'careers'
+                                        ? 'border-[#635bff] text-[#635bff] dark:text-[#9bb1ff]'
+                                        : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                                }`}
+                            >
+                                <span>Careers</span>
+                                <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1 rounded">We're hiring</span>
+                            </button>
+                            <button
+                                onClick={() => setLearnMoreActiveTab('about')}
+                                className={`pb-2.5 border-b-2 transition-colors ${
+                                    learnMoreActiveTab === 'about'
+                                        ? 'border-[#635bff] text-[#635bff] dark:text-[#9bb1ff]'
+                                        : 'border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                                }`}
+                            >
+                                About
+                            </button>
+                        </div>
+
+                        <div className="p-6 max-h-[60vh] overflow-y-auto text-xs leading-relaxed text-neutral-600 dark:text-neutral-300 space-y-3">
+                            {learnMoreActiveTab === 'policy' && (
+                                <div>
+                                    <h4 className="font-semibold text-neutral-900 dark:text-white text-sm mb-1">Privacy & Data Governance</h4>
+                                    <p>At Dynime AI, protecting corporate and user data is our highest institutional priority. We enforce zero training on customer proprietary data, encrypted storage at rest (AES-256), and end-to-end TLS 1.3 transit encryption.</p>
+                                    <p className="mt-2">All conversational interactions are tenant-isolated and compliant with global GDPR, CCPA, and European AI Act regulatory standards.</p>
+                                </div>
+                            )}
+
+                            {learnMoreActiveTab === 'terms' && (
+                                <div>
+                                    <h4 className="font-semibold text-neutral-900 dark:text-white text-sm mb-1">Terms of Service & Usage SLA</h4>
+                                    <p>Dynime AI provides enterprise-grade multi-model orchestration, deep research, and document generation capabilities. Users retain complete copyright and commercial ownership of all generated documents, tables, and code artifacts.</p>
+                                    <p className="mt-2">Standard uptime commitment is 99.9% across our distributed inference clusters and API gateway endpoints.</p>
+                                </div>
+                            )}
+
+                            {learnMoreActiveTab === 'careers' && (
+                                <div>
+                                    <h4 className="font-semibold text-neutral-900 dark:text-white text-sm mb-1">Build the Future of Enterprise AI at Dynime</h4>
+                                    <p>We are expanding our core intelligence, model routing, and systems engineering teams globally. If you are passionate about high-throughput inference, agentic swarms, and elegant product craft, we would love to meet you.</p>
+                                    <div className="mt-3 p-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700 flex items-center justify-between">
+                                        <div>
+                                            <p className="font-semibold text-neutral-900 dark:text-white">Senior Full-Stack AI Engineer</p>
+                                            <p className="text-[11px] text-neutral-400">Remote / Hybrid · Full-time</p>
+                                        </div>
+                                        <a href="https://dynime.com/careers" target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-lg bg-[#635bff] text-white text-xs font-medium hover:bg-[#5465ff] transition-colors">Apply</a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {learnMoreActiveTab === 'about' && (
+                                <div>
+                                    <h4 className="font-semibold text-neutral-900 dark:text-white text-sm mb-1">About Dynime Inc.</h4>
+                                    <p>Dynime AI is an enterprise-grade artificial intelligence operating system engineered for founders, researchers, and global enterprises. Our mission is to seamlessly unite frontier reasoning models, native spreadsheet compilation, and agentic workflows into a singular unified studio.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="px-6 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 flex justify-between items-center text-xs">
+                            <span className="text-neutral-400">Dynime AI Enterprise v2.4</span>
+                            <a href="https://dynime.com" target="_blank" rel="noopener noreferrer" className="text-[#635bff] dark:text-[#9bb1ff] hover:underline flex items-center gap-1">
+                                <span>dynime.com</span>
+                                <ExternalLink className="w-3 h-3" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* GET APPS & EXTENSIONS MODAL */}
+            {isAppsModalOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-[#15151a] border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden text-neutral-900 dark:text-neutral-100 animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 rounded-lg bg-[#635bff]/10 text-[#635bff] dark:text-[#9bb1ff]">
+                                    <Download className="w-4 h-4" />
+                                </div>
+                                <h3 className="font-semibold text-sm">Dynime AI Desktop & Extensions</h3>
+                            </div>
+                            <button
+                                onClick={() => setIsAppsModalOpen(false)}
+                                className="p-1 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-3">
+                            <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-[#635bff]/40 bg-neutral-50 dark:bg-neutral-900/50 flex items-center justify-between transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-lg bg-[#635bff]/10 text-[#635bff] flex items-center justify-center font-bold text-xs">
+                                        mac
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-neutral-900 dark:text-white">Dynime AI for macOS</p>
+                                        <p className="text-[11px] text-neutral-400">Apple Silicon (M1/M2/M3/M4) & Intel</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => toast.success('Starting Dynime Desktop for macOS download...')}
+                                    className="px-3 py-1.5 rounded-lg bg-[#635bff] hover:bg-[#5465ff] text-white text-xs font-medium transition-colors"
+                                >
+                                    Download
+                                </button>
+                            </div>
+
+                            <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-[#635bff]/40 bg-neutral-50 dark:bg-neutral-900/50 flex items-center justify-between transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">
+                                        win
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-neutral-900 dark:text-white">Dynime AI for Windows</p>
+                                        <p className="text-[11px] text-neutral-400">Windows 11 & 10 (64-bit)</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => toast.success('Starting Dynime Desktop for Windows download...')}
+                                    className="px-3 py-1.5 rounded-lg bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs font-medium hover:bg-[#635bff] dark:hover:bg-[#635bff] dark:hover:text-white transition-colors"
+                                >
+                                    Download
+                                </button>
+                            </div>
+
+                            <div className="p-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-[#635bff]/40 bg-neutral-50 dark:bg-neutral-900/50 flex items-center justify-between transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-xs">
+                                        ext
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-neutral-900 dark:text-white">Chrome & Edge Extension</p>
+                                        <p className="text-[11px] text-neutral-400">Contextual web copilot & instant sidebar</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => toast.info('Chrome Web Store listing opening soon.')}
+                                    className="px-3 py-1.5 rounded-lg bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-xs font-medium hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors"
+                                >
+                                    Add to Chrome
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* GET HELP MODAL */}
+            {isHelpModalOpen && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-[#15151a] border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden text-neutral-900 dark:text-neutral-100 animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 rounded-lg bg-[#635bff]/10 text-[#635bff] dark:text-[#9bb1ff]">
+                                    <HelpCircle className="w-4 h-4" />
+                                </div>
+                                <h3 className="font-semibold text-sm">Help & Support</h3>
+                            </div>
+                            <button
+                                onClick={() => setIsHelpModalOpen(false)}
+                                className="p-1 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-3 text-xs leading-relaxed">
+                            <p className="text-neutral-500 dark:text-neutral-400">Need assistance with your Dynime AI account, prompt capabilities, or enterprise gateway?</p>
+
+                            <div className="space-y-2 mt-2">
+                                <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800">
+                                    <p className="font-semibold text-neutral-900 dark:text-white">Keyboard Shortcuts</p>
+                                    <div className="mt-1 space-y-1 text-neutral-500 dark:text-neutral-400">
+                                        <div className="flex justify-between"><span>New discussion</span><kbd className="font-mono">⌘ K</kbd></div>
+                                        <div className="flex justify-between"><span>Settings</span><kbd className="font-mono">⇧ ⌘ ,</kbd></div>
+                                        <div className="flex justify-between"><span>Invoke plugins</span><kbd className="font-mono">/</kbd></div>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+                                    <div>
+                                        <p className="font-semibold text-neutral-900 dark:text-white">Documentation</p>
+                                        <p className="text-[11px] text-neutral-400">Guides, API reference & model benchmarks</p>
+                                    </div>
+                                    <a href="https://account.dynime.com/docs" target="_blank" rel="noopener noreferrer" className="text-[#635bff] hover:underline flex items-center gap-1 font-medium">
+                                        <span>View</span>
+                                        <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             </div>
         </div>
     );

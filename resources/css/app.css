@@ -166,3 +166,64 @@ h1, h2, h3, .font-heading {
   font-family: pplxSans, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   font-weight: 440;
 }
+
+
+/* Lottie-style Icon Micro-Animations */
+@keyframes lottie-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes lottie-pulse-subtle {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.18); opacity: 0.85; filter: drop-shadow(0 0 6px rgba(99, 91, 255, 0.45)); }
+}
+
+@keyframes lottie-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(4deg); }
+}
+
+@keyframes lottie-bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px) scale(1.05); }
+}
+
+@keyframes lottie-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg) scale(1.08); }
+  75% { transform: rotate(10deg) scale(1.08); }
+}
+
+.animate-lottie-pulse {
+  animation: lottie-pulse-subtle 2s infinite ease-in-out;
+}
+
+.animate-lottie-float {
+  animation: lottie-float 3s infinite ease-in-out;
+}
+
+.lottie-icon {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group:hover .lottie-hover-spin {
+  transform: rotate(360deg);
+  transition: transform 0.75s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group:hover .lottie-hover-tilt {
+  transform: rotate(-12deg) scale(1.15);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group:hover .lottie-hover-bounce {
+  transform: translateY(-3px) scale(1.15);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.group:hover .lottie-hover-pulse {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 6px rgba(99, 91, 255, 0.4));
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
