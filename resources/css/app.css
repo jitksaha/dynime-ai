@@ -161,3 +161,8 @@ h1, h2, h3, .font-heading {
   color: #64748b;
   font-style: italic;
 }
+
+.font-pplx {
+  font-family: pplxSans, ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-weight: 440;
+}

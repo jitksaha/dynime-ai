@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\AdminAiController;
+use App\Http\Controllers\PricingController;
 
 // Public & Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -11,6 +12,10 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::get('/auth/sso', [AuthController::class, 'ssoRedirect'])->name('auth.sso.redirect');
 Route::get('/auth/sso/callback', [AuthController::class, 'ssoCallback'])->name('auth.sso.callback');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Public Pricing
+Route::get('/pricing', [PricingController::class, 'index'])->name('pricing.index');
+Route::get('/api/plans', [PricingController::class, 'getPlans'])->name('pricing.plans');
 
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
@@ -28,6 +33,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
     Route::get('/api/chat/stream', [ChatController::class, 'stream'])->name('chat.stream');
     Route::post('/api/chat/attachments', [ChatController::class, 'uploadAttachment'])->name('chat.attachments.upload');
+
+    // Pricing Actions (Protected)
+    Route::post('/api/plans/select', [PricingController::class, 'selectPlan'])->name('pricing.select');
+
 
     // Admin Panel (Protected)
     Route::prefix('admin')->name('admin.')->group(function () {

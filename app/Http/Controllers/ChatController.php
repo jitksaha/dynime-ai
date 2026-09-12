@@ -11,6 +11,7 @@ use App\Models\AiConversation;
 use App\Models\AiMessage;
 use App\Models\AiAttachment;
 use App\Models\AiSetting;
+use App\Models\AiPlan;
 use App\Services\DComposer\DComposer;
 
 class ChatController extends Controller
@@ -238,6 +239,8 @@ class ChatController extends Controller
             ],
         ];
 
+        $plans = class_exists(AiPlan::class) ? AiPlan::active()->get() : [];
+
         return Inertia::render('Chat/Index', [
             'conversations' => $conversations,
             'initial_conversation' => $activeConv,
@@ -247,6 +250,8 @@ class ChatController extends Controller
             'essential_skills' => $essentialSkills,
             'connectors' => $connectors,
             'plugins' => $plugins,
+            'current_plan_slug' => $user->current_plan_slug ?? 'free',
+            'plans' => $plans,
         ]);
     }
 

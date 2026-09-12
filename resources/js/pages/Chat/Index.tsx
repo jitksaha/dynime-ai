@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { toast } from 'sonner';
+import PricingModal from '@/components/PricingModal';
 import axios from 'axios';
 import {
     Camera,
@@ -155,14 +156,16 @@ interface PluginItem {
 }
 
 interface Props {
-    conversations: Conversation[];
-    initial_conversation: Conversation | null;
-    active_providers: Provider[];
-    available_models?: AvailableModel[];
-    capabilities: Capability[];
-    essential_skills?: EssentialSkill[];
+    conversations?: Conversation[];
+    initial_conversation?: Conversation | null;
+    active_providers?: any[];
+    available_models?: ModelItem[];
+    capabilities?: CapabilityItem[];
+    essential_skills?: SkillItem[];
     connectors?: ConnectorItem[];
-    plugins?: PluginItem[];
+    plugins?: any[];
+    current_plan_slug?: string;
+    plans?: any[];
 }
 
 const DEFAULT_MODELS: AvailableModel[] = [
@@ -202,6 +205,8 @@ export default function ChatIndex({
     capabilities = [],
     essential_skills = DEFAULT_SKILLS,
     connectors = DEFAULT_CONNECTORS,
+    current_plan_slug = 'free',
+    plans = [],
 }: Props) {
     const { auth } = usePage().props as any;
     const user = auth?.user;
@@ -226,6 +231,10 @@ export default function ChatIndex({
     const [isToolsTimelineOpen, setIsToolsTimelineOpen] = useState(false);
     const [editingConvUuid, setEditingConvUuid] = useState<string | null>(null);
     const [editTitleInput, setEditTitleInput] = useState('');
+
+    // Pricing Modal State
+    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+    const [userPlan, setUserPlan] = useState<string>(current_plan_slug);
 
     // Model Selector State (Default: DComposer)
     const [selectedModel, setSelectedModel] = useState<string>('dcomposer');
@@ -1112,21 +1121,25 @@ export default function ChatIndex({
                                     />
                                     <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0f0f13]" />
                                 </div>
-                                <span className="text-xs font-semibold text-neutral-900 dark:text-white truncate max-w-[80px]">
-                                    {user.name}
-                                </span>
+                                <div className="flex flex-col truncate">
+                                    <span className="text-xs font-semibold text-neutral-900 dark:text-white truncate max-w-[90px]">
+                                        {user.name}
+                                    </span>
+                                    <span className="text-[10px] text-neutral-400 capitalize">
+                                        {userPlan} plan
+                                    </span>
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-1.5">
                                 {/* Upgrade Button Pill matching Screenshot 1 */}
-                                <a
-                                    href="https://account.dynime.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-neutral-200 dark:bg-white/10 hover:bg-neutral-300 dark:hover:bg-white/20 text-neutral-800 dark:text-neutral-200 transition-colors"
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPricingModalOpen(true)}
+                                    className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#635bff]/15 hover:bg-[#635bff]/25 text-[#635bff] dark:text-[#9bb1ff] border border-[#635bff]/20 transition-colors"
                                 >
                                     Upgrade
-                                </a>
+                                </button>
 
                                 {/* Desktop / App Tray Button matching Screenshot 1 */}
                                 <button
@@ -2105,7 +2118,18 @@ export default function ChatIndex({
                     )}
                 </main>
 
-                {/* SKILLS & CONNECTORS SETTINGS MODAL */}
+                {/* PERPLEXITY-STYLE DYNAMIC PRICING MODAL */}
+            <PricingModal
+                isOpen={isPricingModalOpen}
+                onClose={() => setIsPricingModalOpen(false)}
+                currentPlanSlug={userPlan}
+                plans={plans}
+                onPlanUpdated={(newSlug) => {
+                    setUserPlan(newSlug);
+                }}
+            />
+
+            {/* SKILLS & CONNECTORS SETTINGS MODAL */}
                 {isSkillsModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
                         <div className="bg-white dark:bg-[#191920] border border-neutral-200 dark:border-white/10 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden text-neutral-900 dark:text-white">
