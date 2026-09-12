@@ -79,6 +79,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 
 interface Message {
@@ -177,11 +180,12 @@ interface PluginItem {
 
 interface Props {
     conversations?: Conversation[];
+    projects?: Project[];
     initial_conversation?: Conversation | null;
     active_providers?: any[];
-    available_models?: ModelItem[];
-    capabilities?: CapabilityItem[];
-    essential_skills?: SkillItem[];
+    available_models?: AvailableModel[];
+    capabilities?: Capability[];
+    essential_skills?: EssentialSkill[];
     connectors?: ConnectorItem[];
     plugins?: any[];
     current_plan_slug?: string;
@@ -324,6 +328,7 @@ const UI_TRANSLATIONS: Record<string, Record<string, string>> = {
 
 export default function ChatIndex({
     conversations: initialConversations = [],
+    projects: initialProjects = [],
     initial_conversation = null,
     active_providers = [],
     available_models = DEFAULT_MODELS,
@@ -1055,7 +1060,9 @@ export default function ChatIndex({
                 conv = res.data;
                 setConversations([conv!, ...conversations]);
                 setActiveConv(conv);
-                updateChatUrl(conv.uuid, false);
+                if (conv?.uuid) {
+                    updateChatUrl(conv.uuid, false);
+                }
             } catch (e) {
                 toast.error('Could not initiate conversation session.');
                 return;
@@ -1463,7 +1470,7 @@ export default function ChatIndex({
 
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-[#0c0c0f] text-neutral-900 dark:text-neutral-100 font-sans antialiased selection:bg-[#635bff] selection:text-white transition-colors duration-200">
-            <Head title="Dynime AI - Enterprise Intelligence" />
+            <Head title={activeConv?.title ? `${activeConv.title} | Dynime AI` : 'Dynime AI — Enterprise Intelligence & Workspace'} />
 
             {/* Left Kimi-Style Sidebar (Fixed Width 260px, Collapsible with transition) */}
             <aside
@@ -2760,7 +2767,7 @@ export default function ChatIndex({
                                                 <div className="flex flex-col gap-3">
                                                     {/* Document Intelligence Banner if previous user message had uploaded assets */}
                                                     {(() => {
-                                                        const prevUserMsg = mIdx > 0 ? messages[mIdx - 1] : null;
+                                                        const prevUserMsg = index > 0 ? messages[index - 1] : null;
                                                         const hasAttachments = prevUserMsg && prevUserMsg.role === 'user' && prevUserMsg.attachments && prevUserMsg.attachments.length > 0;
                                                         if (!hasAttachments) return null;
                                                         return (

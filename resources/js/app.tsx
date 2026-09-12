@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import '../css/app.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -12,10 +13,17 @@ const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('c
 if (token) {
     axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
 }
-const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Dynime AI';
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => {
+        if (!title || title.trim() === '') {
+            return 'Dynime AI — Enterprise Intelligence & Workspace';
+        }
+        if (title.includes('Dynime AI')) {
+            return title;
+        }
+        return `${title} | Dynime AI`;
+    },
     resolve: (name) => resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);
@@ -27,6 +35,6 @@ createInertiaApp({
         );
     },
     progress: {
-        color: '#7c3aed',
+        color: '#635bff',
     },
 });

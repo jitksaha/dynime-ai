@@ -1,5 +1,10 @@
 User-agent: *
-Disallow: /api/
-Disallow: /account/
+Allow: /
+Allow: /chat
+Allow: /pricing
 Allow: /login
 Allow: /register
+Disallow: /api/
+Disallow: /account/
+
+Sitemap: https://ai.dynime.com/sitemap.xml
