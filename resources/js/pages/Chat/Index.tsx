@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
+import { StructuredContentRenderer } from '../../components/StructuredContentRenderer';
 import { toast } from 'sonner';
 import PricingModal from '@/components/PricingModal';
 import axios from 'axios';
@@ -749,32 +750,33 @@ export default function ChatIndex({
         setAttachments(attachments.filter((_, i) => i !== index));
     };
 
-    // Synthesize Rich Document Artifacts for Word, Excel, PPT, JSON, and Code
-    const synthesizeArtifacts = (text: string, title?: string): DocumentArtifact[] => {
-        const lower = text.toLowerCase();
-        const baseTitle = (title || 'Business_Management_Report').replace(/[^a-zA-Z0-9_-]/g, '_');
-        const artifacts: DocumentArtifact[] = [];
+    // Helper to detect if user prompt explicitly requested a downloadable file/artifact
+    const isExplicitFileRequest = (prompt?: string): boolean => {
+        if (!prompt) return false;
+        const p = prompt.toLowerCase();
+        return (
+            /\b(generate|create|make|build|export|download|produce|prepare)\s+(an?\s+)?(excel|spreadsheet|xlsx|csv|workbook|word|docx|document file|downloadable report|presentation|slides?|deck|powerpoint|pptx|pdf)\b/i.test(p) ||
+            /\b(as an? excel|as a spreadsheet|as an? xlsx|as a docx|as a word doc|as a pptx?|as a slide deck|as a download)\b/i.test(p) ||
+            /\b(downloadable (file|document|sheet|deck|report))\b/i.test(p)
+        );
+    };
 
-        // Check if user or assistant generated/requested Word / Report
-        if (lower.includes('document') || lower.includes('report') || lower.includes('cv') || lower.includes('resume') || lower.includes('proposal') || lower.includes('word')) {
-            artifacts.push({
-                id: 'doc-word-1',
-                title: `${baseTitle}.docx`,
-                filename: `${baseTitle}.docx`,
-                type: 'word',
-                typeLabel: 'Document · Word',
-                size: '42.5 KB',
-                pages: 2,
-                content: text,
-            });
+    // Controlled Artifact Generation: Only synthesize downloadable files if user explicitly requested them
+    const synthesizeArtifacts = (text: string, title?: string, userPrompt?: string): DocumentArtifact[] => {
+        if (!isExplicitFileRequest(userPrompt) && !isExplicitFileRequest(title)) {
+            return [];
         }
 
+        const lowerPrompt = (userPrompt || title || '').toLowerCase();
+        const baseTitle = (title || 'Enterprise_Deliverable').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const artifacts: DocumentArtifact[] = [];
+
         // Check for Excel / Spreadsheet
-        if (lower.includes('excel') || lower.includes('sheet') || lower.includes('table') || lower.includes('financial') || lower.includes('metric')) {
+        if (lowerPrompt.includes('excel') || lowerPrompt.includes('sheet') || lowerPrompt.includes('xlsx') || lowerPrompt.includes('csv') || lowerPrompt.includes('workbook')) {
             artifacts.push({
                 id: 'doc-excel-1',
-                title: `${baseTitle}_Financial_Model.xlsx`,
-                filename: `${baseTitle}_Financial_Model.xlsx`,
+                title: `${baseTitle}_Model.xlsx`,
+                filename: `${baseTitle}_Model.xlsx`,
                 type: 'excel',
                 typeLabel: 'Spreadsheet · Excel',
                 size: '28.1 KB',
@@ -793,11 +795,11 @@ export default function ChatIndex({
         }
 
         // Check for Presentation / PPT
-        if (lower.includes('slide') || lower.includes('presentation') || lower.includes('deck') || lower.includes('powerpoint')) {
+        if (lowerPrompt.includes('slide') || lowerPrompt.includes('presentation') || lowerPrompt.includes('deck') || lowerPrompt.includes('powerpoint') || lowerPrompt.includes('pptx')) {
             artifacts.push({
                 id: 'doc-ppt-1',
-                title: `${baseTitle}_Executive_Deck.pptx`,
-                filename: `${baseTitle}_Executive_Deck.pptx`,
+                title: `${baseTitle}_Deck.pptx`,
+                filename: `${baseTitle}_Deck.pptx`,
                 type: 'presentation',
                 typeLabel: 'Presentation · PowerPoint',
                 size: '56.4 KB',
@@ -831,40 +833,15 @@ export default function ChatIndex({
             });
         }
 
-        // Check for JSON / Code
-        if (lower.includes('json') || lower.includes('code') || lower.includes('api') || lower.includes('schema') || lower.includes('endpoint')) {
+        // Check for Word / Report
+        if (lowerPrompt.includes('word') || lowerPrompt.includes('docx') || lowerPrompt.includes('document file') || lowerPrompt.includes('downloadable report')) {
             artifacts.push({
-                id: 'doc-code-1',
-                title: `${baseTitle}_schema.json`,
-                filename: `${baseTitle}_schema.json`,
-                type: 'json',
-                typeLabel: 'Data · JSON',
-                size: '8.2 KB',
-                pages: 1,
-                content: JSON.stringify(
-                    {
-                        status: 'success',
-                        system: 'Dynime AI Enterprise Platform',
-                        version: '2.5.0',
-                        organization: 'Dynime LLC',
-                        capabilities: ['Word Generation', 'Excel Modeling', 'Slide Decks', 'Code & JSON'],
-                        telemetry: { latency_ms: 125, model: 'Dynime-K3-High', verified: true },
-                    },
-                    null,
-                    2
-                ),
-            });
-        }
-
-        // Default to a professional Word document if no specific type matched
-        if (artifacts.length === 0) {
-            artifacts.push({
-                id: 'doc-word-default',
+                id: 'doc-word-1',
                 title: `${baseTitle}.docx`,
                 filename: `${baseTitle}.docx`,
                 type: 'word',
                 typeLabel: 'Document · Word',
-                size: '34.8 KB',
+                size: '42.5 KB',
                 pages: 2,
                 content: text,
             });
@@ -968,7 +945,7 @@ export default function ChatIndex({
                     });
                 });
             }
-            const docs = msg.documents || (msg.role === 'assistant' ? synthesizeArtifacts(msg.content, activeConv?.title) : []);
+            const docs = msg.documents || [];
             docs.forEach((doc) => {
                 items.push({
                     id: "art-" + doc.id,
@@ -1035,7 +1012,7 @@ export default function ChatIndex({
 
             if (res.data.success) {
                 const rawResp = res.data.response;
-                const generatedDocs = synthesizeArtifacts(rawResp.content, res.data.conversation?.title || conv!.title);
+                const generatedDocs = synthesizeArtifacts(rawResp.content, res.data.conversation?.title || conv!.title, text);
                 const enrichedResp: Message = {
                     ...rawResp,
                     documents: generatedDocs,
@@ -2538,9 +2515,11 @@ export default function ChatIndex({
                                                                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-neutral-100 dark:bg-[#1a1a20] border border-neutral-200 dark:border-white/10 text-xs text-neutral-800 dark:text-neutral-200 shadow-xs"
                                                                 >
                                                                     <FileText className="w-4 h-4 text-[#635bff] dark:text-[#788bff]" />
-                                                                    <div>
-                                                                        <div className="font-medium max-w-[160px] truncate">{att.name || 'document_pdf'}</div>
-                                                                        <div className="text-[10px] text-neutral-400 uppercase">PDF 561.04 KB</div>
+                                                                    <div className="text-left">
+                                                                        <div className="font-medium max-w-[180px] truncate">{att.name || 'Attached Document'}</div>
+                                                                        <div className="text-[10px] text-neutral-400 uppercase">
+                                                                            {(att.type || 'Document').replace('application/', '')} · {att.size ? (typeof att.size === 'number' ? `${(att.size / 1024).toFixed(1)} KB` : att.size) : 'Uploaded'}
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -2581,47 +2560,41 @@ export default function ChatIndex({
                                             ) : (
                                                 /* Assistant Response Area matching Screenshots 2, 3, 4 */
                                                 <div className="flex flex-col gap-3">
-                                                    {/* Tool Execution Summary Bar matching Screenshot 2 */}
-                                                    <div className="rounded-xl border border-neutral-200/80 dark:border-white/[0.06] bg-neutral-50 dark:bg-white/[0.02] p-2.5 shadow-xs">
-                                                        <div
-                                                            onClick={() => setIsToolsTimelineOpen(!isToolsTimelineOpen)}
-                                                            className="flex items-center justify-between cursor-pointer select-none"
-                                                        >
-                                                            <div className="flex items-center gap-2.5 text-xs text-neutral-700 dark:text-neutral-300 font-medium">
-                                                                {/* Blue round AI icon badge matching Screenshot 2 */}
-                                                                <Bot className="w-4 h-4 text-[#635bff] dark:text-[#788bff] flex-shrink-0" />
-                                                                <span>Used 23 tools, Business Management Report Chapter Outline and Structure</span>
-                                                                <ChevronDown className={`w-3.5 h-3.5 text-neutral-400 transition-transform ${isToolsTimelineOpen ? 'rotate-180' : ''}`} />
-                                                            </div>
-
-                                                            <Download className="w-3.5 h-3.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-white" />
-                                                        </div>
-
-                                                        {/* Expandable Execution Timeline matching Screenshot 2 */}
-                                                        {isToolsTimelineOpen && (
-                                                            <div className="mt-2 pt-2 border-t border-neutral-200/60 dark:border-white/[0.04] space-y-1.5 pl-7 text-xs text-neutral-500 dark:text-neutral-400 font-mono">
-                                                                <div className="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
-                                                                    <Terminal className="w-3 h-3" />
-                                                                    <span>Execute Terminal | Verify document content structure</span>
+                                                    {/* Document Intelligence Banner if previous user message had uploaded assets */}
+                                                    {(() => {
+                                                        const prevUserMsg = mIdx > 0 ? messages[mIdx - 1] : null;
+                                                        const hasAttachments = prevUserMsg && prevUserMsg.role === 'user' && prevUserMsg.attachments && prevUserMsg.attachments.length > 0;
+                                                        if (!hasAttachments) return null;
+                                                        return (
+                                                            <div className="mb-3 px-4 py-2.5 rounded-xl bg-[#635bff]/[0.06] dark:bg-[#635bff]/10 border border-[#635bff]/20 dark:border-[#635bff]/30 flex items-center justify-between gap-3 text-xs">
+                                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                                    <div className="p-1 rounded-lg bg-[#635bff]/15 text-[#635bff] dark:text-[#a5b4fc]">
+                                                                        <FileText className="w-3.5 h-3.5" />
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <span className="font-semibold text-neutral-900 dark:text-white">Document Intelligence</span>
+                                                                        <span className="text-neutral-500 dark:text-neutral-400 ml-2 hidden sm:inline">· Analyzed {prevUserMsg.attachments?.length} attached asset{prevUserMsg.attachments?.length === 1 ? '' : 's'} with deep synthesis</span>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="pl-5">• Think</div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                                                                    <span>Write Todo</span>
-                                                                </div>
-                                                                <div className="pl-5">• Think</div>
+                                                                <span className="text-[10px] px-2 py-0.5 rounded-md font-mono font-medium bg-white/80 dark:bg-black/40 text-[#635bff] dark:text-[#a5b4fc] border border-[#635bff]/20 flex-shrink-0">
+                                                                    Deep Synthesis
+                                                                </span>
                                                             </div>
-                                                        )}
-                                                    </div>
+                                                        );
+                                                    })()}
 
-                                                    {/* Assistant Message Content */}
+                                                    {/* Assistant Structured Message Content */}
                                                     <div className="text-neutral-900 dark:text-neutral-100">
-                                                        {formatAssistantMessage(msg.content)}
+                                                        <StructuredContentRenderer
+                                                            content={msg.content}
+                                                            onCopyCode={handleCopy}
+                                                            copiedCodeId={copiedId}
+                                                        />
                                                     </div>
 
-                                                    {/* Generated Documents / Deliverables Section matching Screenshot 3 & 4 */}
+                                                    {/* Generated Documents / Deliverables Section (Only shown when explicitly requested) */}
                                                     <div className="space-y-2 mt-3">
-                                                        {(msg.documents || synthesizeArtifacts(msg.content, activeConv?.title)).map((doc) => {
+                                                        {(msg.documents || []).map((doc) => {
                                                             return (
                                                                 <div
                                                                     key={doc.id}
